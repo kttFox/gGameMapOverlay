@@ -55,6 +55,33 @@ public class ReadingTrackerTests
         Assert.False(tracker.UpdateCoordinates(null));
         Assert.Equal(new GameCoordinate(1, 2), tracker.Coordinates);
     }
+
+    [Fact]
+    public void Coordinates_ChangeIsAdoptedAfterConfirmHits()
+    {
+        var tracker = Tracker();
+        tracker.CoordinateConfirmHits = 2;
+        Assert.True(tracker.UpdateCoordinates(new GameCoordinate(1, 2))); // 最初の座標はすぐ採用する
+        Assert.False(tracker.UpdateCoordinates(new GameCoordinate(1, 3)));
+        Assert.Equal(new GameCoordinate(1, 2), tracker.Coordinates);
+        Assert.Equal(new GameCoordinate(1, 3), tracker.PendingCoordinates);
+        Assert.True(tracker.UpdateCoordinates(new GameCoordinate(1, 3)));
+        Assert.Equal(new GameCoordinate(1, 3), tracker.Coordinates);
+        Assert.Null(tracker.PendingCoordinates);
+    }
+
+    [Fact]
+    public void Coordinates_SingleMisreadIsIgnoredWithConfirmHits()
+    {
+        var tracker = Tracker();
+        tracker.CoordinateConfirmHits = 2;
+        tracker.UpdateCoordinates(new GameCoordinate(1, 2));
+        Assert.False(tracker.UpdateCoordinates(new GameCoordinate(9, 9))); // 一瞬の誤読
+        Assert.False(tracker.UpdateCoordinates(new GameCoordinate(1, 2)));
+        Assert.Null(tracker.PendingCoordinates);
+        Assert.False(tracker.UpdateCoordinates(new GameCoordinate(9, 9))); // 続かなければ採用しない
+        Assert.Equal(new GameCoordinate(1, 2), tracker.Coordinates);
+    }
 }
 
 public class ClientRegionTests

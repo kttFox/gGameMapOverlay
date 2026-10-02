@@ -20,6 +20,38 @@ public static class ImageAnalysis
         return high <= 4 || (high - low <= 2 && high <= 8);
     }
 
+    /// <summary>
+    /// マップ名・座標の欄 (黒地に白っぽい文字) が描かれているか。黒い画素が多く、黒でも白・灰色でもない (色の付いた) 画素がほとんどなければ UI とみなす。
+    /// UI が描かれる前の画面 (地形が写っている) を読まないために使う。
+    /// 実画面 (tests の Screenshots) の初期の領域では、黒 78〜90%・色付き 0.1% だった。領域を広めに囲んで枠 (茶色) が入っても通るよう、色付きは 15% まで許す。
+    /// </summary>
+    public static bool LooksLikeUiField(BgrImage image) => UiFieldStats(image) is var (dark, colored) && LooksLikeUiField(dark, colored);
+
+    /// <summary>UiFieldStats の値から判定する。</summary>
+    public static bool LooksLikeUiField(double dark, double colored) => dark >= 0.5 && colored <= 0.15;
+
+    /// <summary>黒い画素 (最大のチャネルが 48 未満) と、色の付いた画素 (黒でなく、チャネルの差が 60 より大きい) の割合。</summary>
+    public static (double Dark, double Colored) UiFieldStats(BgrImage image)
+    {
+        int dark = 0, colored = 0;
+        var pixels = image.Pixels;
+        for (var i = 0; i < pixels.Length; i += 3)
+        {
+            var max = Math.Max(pixels[i], Math.Max(pixels[i + 1], pixels[i + 2]));
+            var min = Math.Min(pixels[i], Math.Min(pixels[i + 1], pixels[i + 2]));
+            if (max < 48)
+            {
+                dark++;
+            }
+            else if (max - min > 60)
+            {
+                colored++;
+            }
+        }
+        var count = (double)(image.Width * image.Height);
+        return (dark / count, colored / count);
+    }
+
     /// <summary>ノイズに強い簡易フィンガープリント。見た目が変わっていない座標の再 OCR を省く。</summary>
     public static string Signature(BgrImage image)
     {

@@ -39,3 +39,9 @@ SOFTWARE.
 
 ## ONNX Runtime
 [Microsoft.ML.OnnxRuntime](https://github.com/microsoft/onnxruntime) — MIT License
+
+## Vortice.Windows
+[Vortice.Direct3D11 / Vortice.DXGI](https://github.com/amerkoleci/Vortice.Windows) (画面の撮り方の Desktop Duplication・Windows.Graphics.Capture に使用) — MIT License
+
+## SharpGen.Runtime
+[SharpGen.Runtime](https://github.com/SharpGenTools/SharpGenTools) (Vortice.Windows が使用) — MIT License

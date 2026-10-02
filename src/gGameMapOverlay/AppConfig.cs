@@ -50,6 +50,24 @@ public sealed class AppConfig
     public bool CoordinateGlyphCache { get; set; } = true;
 
     /// <summary>
+    /// 画面の撮り方 (GameCapture.Methods)。環境によって、ゲームがマップ名・座標の UI を描き終える前の画面を撮ってしまうことがあるので選べるようにしておく。
+    /// gdi: 欄ごとに GDI (従来) / gdi_client: クライアント領域全体を GDI で 1 回撮って切り出す / print_window: PrintWindow /
+    /// dxgi: Desktop Duplication / wgc: Windows.Graphics.Capture。
+    /// </summary>
+    public string CaptureMethod { get; set; } = GameCapture.GdiRegions;
+
+    /// <summary>撮る前に DWM が画面を合成し終えるのを待つ (DwmFlush、最大 1 フレーム遅れる)。</summary>
+    public bool CaptureWaitComposition { get; set; }
+
+    /// <summary>撮った欄に UI (黒地に白い文字) が描かれているか確かめ、描かれていなければその画面を読まずに捨てる (ImageAnalysis.LooksLikeUiField)。</summary>
+    public bool CaptureUiCheck { get; set; }
+
+    /// <summary>座標が変わったとき、同じ座標がこの回数続けて読めたら採用する (1 ならすぐ採用する)。一瞬の誤読で動かないように。</summary>
+    public int CoordinateConfirmHits { get; set; } = 1;
+
+    public const int MaxCoordinateConfirmHits = 5;
+
+    /// <summary>
     /// ゲームが前面にあるときだけ読み取る。画面キャプチャは見えている内容を読むため、
     /// 他のウィンドウが重なっているときに誤った文字を拾わないようにする。
     /// </summary>
@@ -417,6 +435,11 @@ public sealed class AppConfig
         {
             config.UpdateUrl = DefaultUpdateUrl;
         }
+        if (!GameCapture.Methods.Contains(config.CaptureMethod))
+        {
+            config.CaptureMethod = GameCapture.GdiRegions;
+        }
+        config.CoordinateConfirmHits = Math.Clamp(config.CoordinateConfirmHits, 1, MaxCoordinateConfirmHits);
         config.ProcessName ??= "";
         config.WindowTitle ??= "";
         config.IntervalMs = config.IntervalMs;

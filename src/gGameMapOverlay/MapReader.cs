@@ -46,6 +46,9 @@ public sealed record Reading
 
     public BgrImage? CoordinateImage { get; init; }
 
+    /// <summary>撮った画面に UI が描かれていなかったので読まずに捨てた (前回までの結果を返している)。</summary>
+    public bool Rejected { get; init; }
+
     public bool Ok => Status == ReadingStatus.Ok;
 }
 
@@ -75,6 +78,9 @@ public sealed class MapReader : IDisposable
     private double lastNameScore;
     private string? lastRawCoordinates;
     private UiTransform lastTransform = UiTransform.Identity;
+    private GameCoordinate? lastParsedCoordinates;
+    private GameCapture capture;
+    private string captureMethod;
 
     /// <param name="ownsOcr">false なら Dispose で OCR エンジンを解放しない (他の MapReader と共有する場合)。</param>
     public MapReader(AppConfig config, IOcrEngine ocr, bool ownsOcr = true)
@@ -82,7 +88,89 @@ public sealed class MapReader : IDisposable
         this.config = config;
         this.ownsOcr = ownsOcr;
         Ocr = ocr;
-        Tracker = new ReadingTracker(config.NameConfirmHits, config.NameHoldSeconds);
+        Tracker = new ReadingTracker(config.NameConfirmHits, config.NameHoldSeconds) { CoordinateConfirmHits = config.CoordinateConfirmHits };
+        captureMethod = config.CaptureMethod;
+        capture = GameCapture.Create(captureMethod);
+    }
+
+    /// <summary>
+    /// 設定の撮り方 (CaptureMethod) と座標の確定に必要な回数を反映する。
+    /// 撮影中に撮り方を差し替えないよう、Read・CaptureCoordinatePixels と同時に呼ばないこと。
+    /// </summary>
+    public void ApplyCaptureSettings()
+    {
+        Tracker.CoordinateConfirmHits = config.CoordinateConfirmHits;
+        if (config.CaptureMethod != captureMethod)
+        {
+            capture.Dispose();
+            captureMethod = config.CaptureMethod;
+            capture = GameCapture.Create(captureMethod);
+            Invalidate();
+        }
+    }
+
+    /// <summary>今の撮り方の名前。</summary>
+    public string CaptureName => GameCapture.NameOf(captureMethod);
+
+    /// <summary>
+    /// 撮った画面に UI が描かれていなかったので捨てたとき (CaptureUiCheck がオンのときだけ確かめる)。引数はログに出す説明。
+    /// 読み取りのスレッドからも呼ばれる。
+    /// </summary>
+    public event Action<string>? FrameRejected;
+
+    /// <summary>UI が描かれていなかったので捨てた画面の数 (起動してから)。</summary>
+    public int RejectedFrames => rejectedFrames;
+
+    private int rejectedFrames;
+
+    private ClientShot Shoot(Rectangle client)
+    {
+        if (config.CaptureWaitComposition)
+        {
+            GameCapture.WaitForComposition();
+        }
+        return capture.Capture(hwnd, client);
+    }
+
+    /// <summary>
+    /// 撮った欄 (what はログ用の欄の名前) に UI が描かれていなければ記録して true (捨てる)。CaptureUiCheck がオフなら確かめない。
+    /// 真っ黒な画面は別に扱う (BlackFrame) ので確かめない。
+    /// </summary>
+    private bool Rejects(BgrImage image, string what)
+    {
+        if (!config.CaptureUiCheck || ImageAnalysis.IsBlackFrame(image))
+        {
+            return false;
+        }
+        var (dark, colored) = ImageAnalysis.UiFieldStats(image);
+        if (ImageAnalysis.LooksLikeUiField(dark, colored))
+        {
+            return false;
+        }
+        Interlocked.Increment(ref rejectedFrames);
+        FrameRejected?.Invoke($"{what}欄が描かれていない画面を捨てました (黒 {dark:P0}・色付き {colored:P0}、{CaptureName}、{rejectedFrames} 回目)");
+        return true;
+    }
+
+    /// <summary>
+    /// 座標欄を今の撮り方で撮った画素 (歩いたかを画素の変化で確かめる用)。撮れない・UI が描かれていない (捨てる設定のとき) なら null。
+    /// </summary>
+    public byte[]? CaptureCoordinatePixels()
+    {
+        if (FindClientRect() is not { } client || RegionInClient(RegionKind.Coordinates, client.Size, lastTransform) is not { } region)
+        {
+            return null;
+        }
+        try
+        {
+            var shot = Shoot(client);
+            var image = shot.Crop(region);
+            return Rejects(image, "座標") ? null : image.Pixels;
+        }
+        catch (Exception exception) when (exception is not OutOfMemoryException)
+        {
+            return null;
+        }
     }
 
     public IOcrEngine Ocr { get; private set; }
@@ -260,12 +348,15 @@ public sealed class MapReader : IDisposable
             return Prepared(RegionMissing(client.Size));
         }
         LastPrepareMs = watch.Elapsed.TotalMilliseconds;
-        // 座標欄とマップ名欄は別々に撮影する。座標欄は毎回、マップ名欄は読み直すときだけ (歩いている間の撮影を小さくする)。
+        // 欄ごとに撮る方式 (従来) では、座標欄とマップ名欄は別々に撮影する。座標欄は毎回、マップ名欄は読み直すときだけ (歩いている間の撮影を小さくする)。
+        // 画面全体を撮る方式では、ここで 1 回撮った画面から両方を切り出す。
+        ClientShot shot;
         BgrImage coordinateImage;
         var captureStart = System.Diagnostics.Stopwatch.GetTimestamp();
         try
         {
-            coordinateImage = ScreenCapture.Capture(regions.Coordinates with { X = client.X + regions.Coordinates.X, Y = client.Y + regions.Coordinates.Y });
+            shot = Shoot(client);
+            coordinateImage = shot.Crop(regions.Coordinates);
         }
         catch (Exception exception) when (exception is not OutOfMemoryException)
         {
@@ -273,6 +364,11 @@ public sealed class MapReader : IDisposable
             return Result(ReadingStatus.CaptureFailed, $"キャプチャに失敗しました: {exception.Message}");
         }
         LastCaptureMs = watch.Elapsed.TotalMilliseconds - LastPrepareMs;
+        if (Rejects(coordinateImage, "座標"))
+        {
+            // UI が描かれていない画面: 読まず、画素の変化 (歩いたか) にも使わない。前回までの結果をそのまま返す。
+            return Result(ReadingStatus.Ok) with { Rejected = true };
+        }
         // 撮影した画面の時刻は、撮影を始めてから終わるまでの真ん中とみなす。
         var captured = captureStart + (System.Diagnostics.Stopwatch.GetTimestamp() - captureStart) / 2;
         previousCaptureTimestamp = latestCoordinatePixels?.Timestamp;
@@ -283,7 +379,8 @@ public sealed class MapReader : IDisposable
             var started = watch.Elapsed.TotalMilliseconds;
             try
             {
-                return ScreenCapture.Capture(regions.Name with { X = client.X + regions.Name.X, Y = client.Y + regions.Name.Y });
+                var name = shot.Crop(regions.Name);
+                return Rejects(name, "マップ名") ? null : name; // UI が描かれていない: 今回はマップ名を読み直さない
             }
             catch (Exception exception) when (exception is not OutOfMemoryException)
             {
@@ -376,12 +473,13 @@ public sealed class MapReader : IDisposable
             }
             LastCoordinateOcrMs = coordinateWatch.Elapsed.TotalMilliseconds;
             lastRawCoordinates = text;
-            Tracker.UpdateCoordinates(TextParsing.ParseCoordinates(text));
+            lastParsedCoordinates = TextParsing.ParseCoordinates(text);
+            Tracker.UpdateCoordinates(lastParsedCoordinates);
         }
         else
         {
-            // 見た目が変わっていないので前回の座標がそのまま有効。
-            Tracker.UpdateCoordinates(Tracker.Coordinates);
+            // 見た目が変わっていないので前回読んだ座標がそのまま有効 (確定を待っている座標なら、もう 1 回読めたと数える)。
+            Tracker.UpdateCoordinates(lastParsedCoordinates ?? Tracker.Coordinates);
         }
     }
 
@@ -437,6 +535,7 @@ public sealed class MapReader : IDisposable
 
     public void Dispose()
     {
+        capture.Dispose();
         if (ownsOcr)
         {
             Ocr.Dispose();

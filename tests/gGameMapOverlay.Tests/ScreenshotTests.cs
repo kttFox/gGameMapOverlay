@@ -124,6 +124,40 @@ public class ScreenshotTests
         Assert.True(scaledDifference > pixelDifference * 3, $"pixel {pixelDifference:0.0} / scaled {scaledDifference:0.0}");
     }
 
+    /// <summary>実画面のマップ名欄・座標欄は、UI が描かれている (捨てない) と判定される。</summary>
+    [Theory]
+    [MemberData(nameof(ScreenshotCase.AllFiles), MemberType = typeof(ScreenshotCase))]
+    public void UiFieldCheck_AcceptsRealFields(string file)
+    {
+        var item = ScreenshotCase.Get(file);
+        var client = item.LoadClient();
+        var transform = new UiTransform(item.Scale, item.ScaleY);
+        foreach (var region in new[] { AppConfig.DefaultNameRegion, AppConfig.DefaultCoordinateRegion })
+        {
+            var image = client.Crop(region.ClipTo(client.Width, client.Height, transform)!.Value);
+            Assert.True(ImageAnalysis.LooksLikeUiField(image), $"{file} {region}: {ImageAnalysis.UiFieldStats(image)}");
+        }
+    }
+
+    /// <summary>欄の代わりに地形や他のウィンドウが写っている画面は、UI が描かれていないと判定される。</summary>
+    [Fact]
+    public void UiFieldCheck_RejectsTerrainAndOtherWindows()
+    {
+        var terrain = new BgrImage(73, 20);
+        for (var i = 0; i < terrain.Pixels.Length; i += 3)
+        {
+            // 草地と土の模様 (BGR)。
+            var grass = i / 3 % 7 < 4;
+            terrain.Pixels[i] = (byte)(grass ? 40 : 60);
+            terrain.Pixels[i + 1] = (byte)(grass ? 140 : 100);
+            terrain.Pixels[i + 2] = (byte)(grass ? 70 : 150);
+        }
+        Assert.False(ImageAnalysis.LooksLikeUiField(terrain));
+        var window = new BgrImage(73, 20);
+        Array.Fill(window.Pixels, (byte)245); // 明るい灰色のウィンドウが重なっている
+        Assert.False(ImageAnalysis.LooksLikeUiField(window));
+    }
+
     [Theory]
     [MemberData(nameof(ScreenshotCase.Files), MemberType = typeof(ScreenshotCase))]
     public void RegionInClient_UsesSamePixelsForEveryWindowSize(string file)

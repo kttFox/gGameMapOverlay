@@ -153,6 +153,15 @@ partial class SettingsForm
 		this.nameHoldBox = new NumericUpDown();
 		this.nameHoldUnit = new Label();
 		this.drawingGroup = new GroupBox();
+		this.captureGroup = new GroupBox();
+		this.capturePanel = new TableLayoutPanel();
+		this.captureMethodCaption = new Label();
+		this.captureMethodBox = new ComboBox();
+		this.captureWaitCheck = new CheckBox();
+		this.captureUiCheck = new CheckBox();
+		this.coordinateConfirmCaption = new Label();
+		this.coordinateConfirmBox = new NumericUpDown();
+		this.coordinateConfirmUnit = new Label();
 		this.drawingPanel = new FlowLayoutPanel();
 		this.bottomPanel = new TableLayoutPanel();
 		this.advancedCheck = new CheckBox();
@@ -217,6 +226,9 @@ partial class SettingsForm
 		( (System.ComponentModel.ISupportInitialize)this.nameConfirmBox ).BeginInit();
 		( (System.ComponentModel.ISupportInitialize)this.nameHoldBox ).BeginInit();
 		this.drawingGroup.SuspendLayout();
+		this.captureGroup.SuspendLayout();
+		this.capturePanel.SuspendLayout();
+		( (System.ComponentModel.ISupportInitialize)this.coordinateConfirmBox ).BeginInit();
 		this.drawingPanel.SuspendLayout();
 		this.bottomPanel.SuspendLayout();
 		this.updateGroup.SuspendLayout();
@@ -1241,11 +1253,13 @@ partial class SettingsForm
 		this.advancedPanel.Controls.Add( this.slideGroup, 0, 4 );
 		this.advancedPanel.Controls.Add( this.nameGroup, 0, 2 );
 		this.advancedPanel.Controls.Add( this.drawingGroup, 0, 3 );
+		this.advancedPanel.Controls.Add( this.captureGroup, 0, 5 );
 		this.advancedPanel.Anchor = AnchorStyles.Top | AnchorStyles.Left | AnchorStyles.Right;
 		this.advancedPanel.Location = new Point( 320, 0 );
 		this.advancedPanel.Margin = new Padding( 6, 0, 0, 0 );
 		this.advancedPanel.Name = "advancedPanel";
-		this.advancedPanel.RowCount = 5;
+		this.advancedPanel.RowCount = 6;
+		this.advancedPanel.RowStyles.Add( new RowStyle() );
 		this.advancedPanel.RowStyles.Add( new RowStyle() );
 		this.advancedPanel.RowStyles.Add( new RowStyle() );
 		this.advancedPanel.RowStyles.Add( new RowStyle() );
@@ -1917,6 +1931,131 @@ partial class SettingsForm
 		this.nameHoldUnit.TabIndex = 8;
 		this.nameHoldUnit.Text = "秒";
 		// 
+		// captureGroup
+		// 
+		this.captureGroup.AutoSize = true;
+		this.captureGroup.AutoSizeMode = AutoSizeMode.GrowAndShrink;
+		this.captureGroup.Controls.Add( this.capturePanel );
+		this.captureGroup.Dock = DockStyle.Fill;
+		this.captureGroup.Location = new Point( 3, 349 );
+		this.captureGroup.Margin = new Padding( 3, 3, 3, 8 );
+		this.captureGroup.Name = "captureGroup";
+		this.captureGroup.Padding = new Padding( 8, 4, 8, 6 );
+		this.captureGroup.Size = new Size( 323, 129 );
+		this.captureGroup.TabIndex = 6;
+		this.captureGroup.TabStop = false;
+		this.captureGroup.Text = "画面の撮り方";
+		// 
+		// capturePanel
+		// 
+		this.capturePanel.AutoSize = true;
+		this.capturePanel.AutoSizeMode = AutoSizeMode.GrowAndShrink;
+		this.capturePanel.ColumnCount = 3;
+		this.capturePanel.ColumnStyles.Add( new ColumnStyle() );
+		this.capturePanel.ColumnStyles.Add( new ColumnStyle() );
+		this.capturePanel.ColumnStyles.Add( new ColumnStyle( SizeType.Percent, 100F ) );
+		this.capturePanel.Controls.Add( this.captureMethodCaption, 0, 0 );
+		this.capturePanel.Controls.Add( this.captureMethodBox, 1, 0 );
+		this.capturePanel.Controls.Add( this.captureWaitCheck, 0, 1 );
+		this.capturePanel.Controls.Add( this.captureUiCheck, 0, 2 );
+		this.capturePanel.Controls.Add( this.coordinateConfirmCaption, 0, 3 );
+		this.capturePanel.Controls.Add( this.coordinateConfirmBox, 1, 3 );
+		this.capturePanel.Controls.Add( this.coordinateConfirmUnit, 2, 3 );
+		this.capturePanel.Dock = DockStyle.Fill;
+		this.capturePanel.Location = new Point( 8, 20 );
+		this.capturePanel.Name = "capturePanel";
+		this.capturePanel.RowCount = 4;
+		this.capturePanel.RowStyles.Add( new RowStyle() );
+		this.capturePanel.RowStyles.Add( new RowStyle() );
+		this.capturePanel.RowStyles.Add( new RowStyle() );
+		this.capturePanel.RowStyles.Add( new RowStyle() );
+		this.capturePanel.Size = new Size( 307, 103 );
+		this.capturePanel.TabIndex = 0;
+		// 
+		// captureMethodCaption
+		// 
+		this.captureMethodCaption.Anchor = AnchorStyles.Left;
+		this.captureMethodCaption.AutoSize = true;
+		this.captureMethodCaption.Location = new Point( 3, 7 );
+		this.captureMethodCaption.Name = "captureMethodCaption";
+		this.captureMethodCaption.Size = new Size( 31, 15 );
+		this.captureMethodCaption.TabIndex = 0;
+		this.captureMethodCaption.Text = "方式";
+		this.toolTip.SetToolTip( this.captureMethodCaption, "マップ名・座標の欄が描かれる前の画面を撮ってしまう環境では、別の方式を試してください" );
+		// 
+		// captureMethodBox
+		// 
+		this.capturePanel.SetColumnSpan( this.captureMethodBox, 2 );
+		this.captureMethodBox.DropDownStyle = ComboBoxStyle.DropDownList;
+		this.captureMethodBox.Items.AddRange( new object[] { "GDI 欄ごと (従来)", "GDI 画面全体", "PrintWindow", "Desktop Duplication", "Windows.Graphics.Capture" } );
+		this.captureMethodBox.Location = new Point( 110, 3 );
+		this.captureMethodBox.Name = "captureMethodBox";
+		this.captureMethodBox.Size = new Size( 190, 23 );
+		this.captureMethodBox.TabIndex = 1;
+		this.toolTip.SetToolTip( this.captureMethodBox, "GDI 欄ごと: 欄ごとに画面から撮ります (速い)\nGDI 画面全体: ゲームの画面全体を 1 回撮って切り出します\nPrintWindow: ゲームのウィンドウに描かせて撮ります (黒くなることがあります)\nDesktop Duplication: 合成し終えたモニターの画面を受け取ります\nWindows.Graphics.Capture: 合成し終えたゲームのウィンドウを受け取ります (Windows 10 では黄色い枠が出ます)" );
+		this.captureMethodBox.SelectedIndexChanged +=  this.CaptureSetting_Changed ;
+		// 
+		// captureWaitCheck
+		// 
+		this.captureWaitCheck.AutoSize = true;
+		this.capturePanel.SetColumnSpan( this.captureWaitCheck, 3 );
+		this.captureWaitCheck.Location = new Point( 3, 32 );
+		this.captureWaitCheck.Name = "captureWaitCheck";
+		this.captureWaitCheck.Size = new Size( 196, 19 );
+		this.captureWaitCheck.TabIndex = 2;
+		this.captureWaitCheck.Text = "撮る前に画面の合成を待つ";
+		this.toolTip.SetToolTip( this.captureWaitCheck, "Windows が画面を合成し終えるのを待ってから撮ります (DwmFlush)。読み取りが最大 1 フレーム遅れます" );
+		this.captureWaitCheck.UseVisualStyleBackColor = true;
+		this.captureWaitCheck.CheckedChanged +=  this.CaptureSetting_Changed ;
+		// 
+		// captureUiCheck
+		// 
+		this.captureUiCheck.AutoSize = true;
+		this.capturePanel.SetColumnSpan( this.captureUiCheck, 3 );
+		this.captureUiCheck.Location = new Point( 3, 57 );
+		this.captureUiCheck.Name = "captureUiCheck";
+		this.captureUiCheck.Size = new Size( 220, 19 );
+		this.captureUiCheck.TabIndex = 3;
+		this.captureUiCheck.Text = "欄が描かれていない画面を捨てる";
+		this.toolTip.SetToolTip( this.captureUiCheck, "撮った欄が黒地に白い文字になっていなければ (地形が写っていれば)、その画面は読まずに捨てます。捨てたことは情報画面のログに出ます" );
+		this.captureUiCheck.UseVisualStyleBackColor = true;
+		this.captureUiCheck.CheckedChanged +=  this.CaptureSetting_Changed ;
+		// 
+		// coordinateConfirmCaption
+		// 
+		this.coordinateConfirmCaption.Anchor = AnchorStyles.Left;
+		this.coordinateConfirmCaption.AutoSize = true;
+		this.coordinateConfirmCaption.Location = new Point( 3, 86 );
+		this.coordinateConfirmCaption.Name = "coordinateConfirmCaption";
+		this.coordinateConfirmCaption.Size = new Size( 98, 15 );
+		this.coordinateConfirmCaption.TabIndex = 4;
+		this.coordinateConfirmCaption.Text = "座標の確定に必要な回数";
+		this.toolTip.SetToolTip( this.coordinateConfirmCaption, "座標が変わったとき、同じ座標がこの回数続けて読めたら採用します。1 ならすぐ採用します (2 以上にすると一瞬の誤読で動かなくなりますが、追従が 1 回分遅れます)" );
+		// 
+		// coordinateConfirmBox
+		// 
+		this.coordinateConfirmBox.Location = new Point( 140, 82 );
+		this.coordinateConfirmBox.Margin = new Padding( 3, 1, 3, 1 );
+		this.coordinateConfirmBox.Maximum = new decimal( new int[] { 5, 0, 0, 0 } );
+		this.coordinateConfirmBox.Minimum = new decimal( new int[] { 1, 0, 0, 0 } );
+		this.coordinateConfirmBox.Name = "coordinateConfirmBox";
+		this.coordinateConfirmBox.Size = new Size( 60, 23 );
+		this.coordinateConfirmBox.TabIndex = 5;
+		this.coordinateConfirmBox.TextAlign = HorizontalAlignment.Right;
+		this.coordinateConfirmBox.Value = new decimal( new int[] { 1, 0, 0, 0 } );
+		this.coordinateConfirmBox.ValueChanged +=  this.CaptureSetting_Changed ;
+		// 
+		// coordinateConfirmUnit
+		// 
+		this.coordinateConfirmUnit.Anchor = AnchorStyles.Left;
+		this.coordinateConfirmUnit.AutoSize = true;
+		this.coordinateConfirmUnit.Location = new Point( 203, 86 );
+		this.coordinateConfirmUnit.Margin = new Padding( 0, 0, 3, 0 );
+		this.coordinateConfirmUnit.Name = "coordinateConfirmUnit";
+		this.coordinateConfirmUnit.Size = new Size( 19, 15 );
+		this.coordinateConfirmUnit.TabIndex = 6;
+		this.coordinateConfirmUnit.Text = "回";
+		// 
 		// drawingGroup
 		// 
 		this.drawingGroup.AutoSize = true;
@@ -2297,6 +2436,11 @@ partial class SettingsForm
 		( (System.ComponentModel.ISupportInitialize)this.nameRefreshBox ).EndInit();
 		( (System.ComponentModel.ISupportInitialize)this.nameConfirmBox ).EndInit();
 		( (System.ComponentModel.ISupportInitialize)this.nameHoldBox ).EndInit();
+		this.captureGroup.ResumeLayout( false );
+		this.captureGroup.PerformLayout();
+		this.capturePanel.ResumeLayout( false );
+		this.capturePanel.PerformLayout();
+		( (System.ComponentModel.ISupportInitialize)this.coordinateConfirmBox ).EndInit();
 		this.drawingGroup.ResumeLayout( false );
 		this.drawingGroup.PerformLayout();
 		this.drawingPanel.ResumeLayout( false );
@@ -2471,4 +2615,13 @@ partial class SettingsForm
 	private Panel scrollPanel;
 	private TableLayoutPanel contentPanel;
 	private Button infoButton;
+	private GroupBox captureGroup;
+	private TableLayoutPanel capturePanel;
+	private Label captureMethodCaption;
+	private ComboBox captureMethodBox;
+	private CheckBox captureWaitCheck;
+	private CheckBox captureUiCheck;
+	private Label coordinateConfirmCaption;
+	private NumericUpDown coordinateConfirmBox;
+	private Label coordinateConfirmUnit;
 }

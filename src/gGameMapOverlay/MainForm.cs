@@ -161,6 +161,12 @@ internal sealed partial class MainForm : Form, ISettingsHost, IInfoSource {
 			? System.Diagnostics.Stopwatch.GetElapsedTime( changed ).TotalMilliseconds
 			: null;
 		overlay.EventLogged = AddEventLog;
+		// UI が描かれていない画面を撮ったとき (読み取りのスレッドからも来る)。
+		reader.FrameRejected += message => {
+			if( IsHandleCreated && !closing ) {
+				BeginInvoke( () => AddEventLog( message ) );
+			}
+		};
 		UpdateMoveKeyWatcher();
 		if( config.WindowX is { } x && config.WindowY is { } y && Screen.AllScreens.Any( screen => screen.WorkingArea.Contains( x + 40, y + 20 ) ) ) {
 			StartPosition = FormStartPosition.Manual;
@@ -1048,6 +1054,12 @@ internal sealed partial class MainForm : Form, ISettingsHost, IInfoSource {
 
 	void ISettingsHost.NameSettingsChanged() => NameSettingsChanged();
 
+	async Task ISettingsHost.CaptureSettingsChangedAsync() {
+		Save();
+		await WithOcrAsync( reader.ApplyCaptureSettings ); // 読み取り中の撮影と重ならないように
+		AddEventLog( $"撮り方: {reader.CaptureName}　合成を待つ {( config.CaptureWaitComposition ? "オン" : "オフ" )}　UI の確認 {( config.CaptureUiCheck ? "オン" : "オフ" )}　座標の確定 {config.CoordinateConfirmHits} 回" );
+	}
+
 	string ISettingsHost.OverlayDataSummary => overlayData is not { } data
 		? overlayError
 		: data.MissingLayers.Any() ? $"{string.Join( "・", data.MissingLayers.Select( layer => layer.FileName ) )} がありません" : "";
@@ -1282,12 +1294,8 @@ internal sealed partial class MainForm : Form, ISettingsHost, IInfoSource {
 			pixelSource = $"読み取りの画像 {age:0.0} ms 前";
 			return shared.Pixels;
 		}
-		pixelSource = "撮影";
-		try {
-			return CoordinateScreenRect() is { } rect ? ScreenCapture.Capture( rect ).Pixels : null;
-		} catch( Exception exception ) when( exception is not OutOfMemoryException ) {
-			return null;
-		}
+		pixelSource = $"撮影 ({reader.CaptureName})";
+		return reader.CaptureCoordinatePixels();
 	}
 
 	/// <summary>

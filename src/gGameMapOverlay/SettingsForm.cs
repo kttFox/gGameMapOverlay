@@ -33,6 +33,9 @@ internal interface ISettingsHost
     /// <summary>Config のオーバーレイの色・不透明度を書き換えた後に呼ぶ (保存して表示を更新する)。</summary>
     void OverlaySettingsChanged();
 
+    /// <summary>Config の撮り方 (Capture*・CoordinateConfirmHits) を書き換えた後に呼ぶ (保存して反映する)。</summary>
+    Task CaptureSettingsChangedAsync();
+
     /// <summary>Config の画面の表示に関する項目を書き換えた後に呼ぶ (保存する)。</summary>
     void SaveConfig();
 
@@ -376,6 +379,18 @@ internal sealed partial class SettingsForm : Form {
 		}
 	}
 
+	private async void CaptureSetting_Changed( object? sender, EventArgs e ) {
+		if( refreshing || captureMethodBox.SelectedIndex < 0 ) {
+			return;
+		}
+		var config = host.Config;
+		config.CaptureMethod = Imaging.GameCapture.Methods[captureMethodBox.SelectedIndex];
+		config.CaptureWaitComposition = captureWaitCheck.Checked;
+		config.CaptureUiCheck = captureUiCheck.Checked;
+		config.CoordinateConfirmHits = (int)coordinateConfirmBox.Value;
+		await RunAsync( host.CaptureSettingsChangedAsync );
+	}
+
 	private void PixelCheckCheck_CheckedChanged( object? sender, EventArgs e ) {
 		if( !refreshing ) {
 			host.Config.MovePixelCheck = pixelCheckCheck.Checked;
@@ -525,6 +540,10 @@ internal sealed partial class SettingsForm : Form {
 			languageBox.SelectedIndex = Math.Max( 0, Array.IndexOf( LanguageKeys, config.OcrLanguage ) );
 			backendBox.SelectedIndex = Math.Max( 0, Array.IndexOf( BackendKeys, config.OcrBackend ) );
 			glyphCacheCheck.Checked = config.CoordinateGlyphCache;
+			captureMethodBox.SelectedIndex = Math.Max( 0, Array.IndexOf( Imaging.GameCapture.Methods, config.CaptureMethod ) );
+			captureWaitCheck.Checked = config.CaptureWaitComposition;
+			captureUiCheck.Checked = config.CaptureUiCheck;
+			coordinateConfirmBox.Value = Math.Clamp( config.CoordinateConfirmHits, coordinateConfirmBox.Minimum, coordinateConfirmBox.Maximum );
 			intervalBox.Value = Math.Clamp( config.IntervalMs, intervalBox.Minimum, intervalBox.Maximum );
 			moveSpeedBox.Items[0] = $"自動 (現在: {WalkSpeed.Grade( config.MoveSpeedGrade ).Name} )";
 			moveSpeedBox.SelectedIndex = config.MoveSpeedAuto ? 0 : config.MoveSpeedGrade + 1;
