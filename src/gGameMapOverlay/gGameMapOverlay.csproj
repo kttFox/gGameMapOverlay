@@ -1,0 +1,43 @@
+<Project Sdk="Microsoft.NET.Sdk">
+
+  <PropertyGroup>
+    <OutputType>WinExe</OutputType>
+    <TargetFramework>net10.0-windows10.0.19041.0</TargetFramework>
+    <SupportedOSPlatformVersion>10.0.17763.0</SupportedOSPlatformVersion>
+    <Nullable>enable</Nullable>
+    <UseWindowsForms>true</UseWindowsForms>
+    <ImplicitUsings>enable</ImplicitUsings>
+    <ApplicationHighDpiMode>PerMonitorV2</ApplicationHighDpiMode>
+    <AssemblyName>gGameMapOverlay</AssemblyName>
+    <RootNamespace>gGameMapOverlay</RootNamespace>
+    <!-- win-x64 専用。onnxruntime.dll などのネイティブ DLL を他プラットフォーム分まで出力しないため -->
+    <RuntimeIdentifier>win-x64</RuntimeIdentifier>
+    <SelfContained>false</SelfContained>
+    <!-- 出力先を bin\Debug\ に短くする (TFM・RID のフォルダを付けない) -->
+    <AppendTargetFrameworkToOutputPath>false</AppendTargetFrameworkToOutputPath>
+    <AppendRuntimeIdentifierToOutputPath>false</AppendRuntimeIdentifierToOutputPath>
+  </PropertyGroup>
+
+  <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Debug|AnyCPU'">
+    <DebugType>embedded</DebugType>
+  </PropertyGroup>
+
+  <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Release|AnyCPU'">
+    <DebugType>embedded</DebugType>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <PackageReference Include="Microsoft.ML.OnnxRuntime" Version="1.30.0" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <InternalsVisibleTo Include="gGameMapOverlay.Tests" />
+  </ItemGroup>
+
+  <!-- マップ名とマスのデータ (オーバーレイ用)。配布物にも含める。*.pak は暗号化したもの (Overlay/DataCipher.cs)。
+       マップ情報のバージョン (version.txt) はリポジトリには置かず、配布する zip にだけ入れる (tools/make-release.ps1) -->
+  <ItemGroup>
+    <None Include="..\..\data\*.json;..\..\data\*.pak" Link="data\%(Filename)%(Extension)" CopyToOutputDirectory="PreserveNewest" />
+  </ItemGroup>
+
+</Project>

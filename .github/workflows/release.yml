@@ -1,0 +1,113 @@
+# タグを push すると GitHub Release を作り、自動更新 (src/gGameMapOverlay/Update) の manifest.json も一緒に出す。
+#   v1.2.3            → 本体
+#   v1.2.3-beta.1     → 本体のベータ版 (プレリリース。manifest.json は出さないので自動更新では配らない)
+#   maps-100 → マップ情報 (data フォルダー)
+# manifest.json は毎回、最新 (latest) リリースのものを引き継いで今回の分だけ書き換えるので、latest の manifest.json に
+# 本体・マップ情報の両方の最新版が入る。latest は本体のリリースにする (GitHub のトップに本体が出るように)。
+# マップ情報のリリースは latest にせず、書き換えた manifest.json を latest の本体リリースに上書きで付け直す
+# (本体のリリースがまだなければ、マップ情報のリリースを latest にする)。アプリは既定で次を見る:
+#   https://github.com/kttFox/gGameMapOverlay/releases/latest/download/manifest.json (AppConfig.DefaultUpdateUrl)
+name: Release
+
+on:
+  push:
+    tags:
+      - 'v*'
+      - 'maps-*'
+  workflow_dispatch:
+    inputs:
+      tag:
+        description: 'リリースタグ名 (例: v1.0.0 / maps-100)'
+        required: true
+
+permissions:
+  contents: write
+
+env:
+  OUTPUT_DIR: release
+
+jobs:
+  release:
+    runs-on: windows-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+        with:
+          ref: ${{ github.event.inputs.tag || github.ref }}
+
+      - name: Setup .NET
+        uses: actions/setup-dotnet@v4
+        with:
+          dotnet-version: '10.0.x'
+
+      - name: Determine component and version
+        id: ver
+        run: |
+          $tag = if ('${{ github.event_name }}' -eq 'workflow_dispatch') { '${{ github.event.inputs.tag }}' } else { '${{ github.ref_name }}' }
+          $prerelease = 'false'
+          if ($tag -match '^v(\d+(\.\d+){0,3})$') {
+            $component = 'app'; $title = "v$($Matches[1])"
+          } elseif ($tag -match '^v(\d+(\.\d+){0,3}-[0-9A-Za-z][0-9A-Za-z.]*)$') {
+            $component = 'app'; $title = "v$($Matches[1]) (ベータ)"; $prerelease = 'true'
+          } elseif ($tag -match '^maps-(\d+(\.\d+)*)$') {
+            $component = 'maps'; $title = "maps v$($Matches[1])"
+          } else {
+            Write-Error "タグ '$tag' を判定できません。本体は v1.2.3 (ベータは v1.2.3-beta.1)、マップ情報は maps-100 の形式で付けてください。"
+            exit 1
+          }
+          "tag=$tag"             >> $env:GITHUB_OUTPUT
+          "component=$component" >> $env:GITHUB_OUTPUT
+          "version=$($Matches[1])" >> $env:GITHUB_OUTPUT
+          "title=$title"         >> $env:GITHUB_OUTPUT
+          "prerelease=$prerelease" >> $env:GITHUB_OUTPUT
+
+      - name: Test
+        run: dotnet test -c Release
+
+      # latest リリースの manifest.json (もう一方のコンポーネントの最新版が入っている) を引き継ぐ。初回はない
+      - name: Download current manifest
+        id: latest
+        if: steps.ver.outputs.prerelease != 'true'
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          New-Item -ItemType Directory -Force $env:OUTPUT_DIR | Out-Null
+          $latestTag = gh release view --repo '${{ github.repository }}' --json tagName --jq .tagName
+          if ($LASTEXITCODE -ne 0) { $latestTag = '' }
+          if ($latestTag) {
+            gh release download $latestTag --repo '${{ github.repository }}' --pattern manifest.json --dir $env:OUTPUT_DIR
+          }
+          if (-not (Test-Path "$env:OUTPUT_DIR/manifest.json")) { Write-Host 'manifest.json はまだありません (新しく作ります)。' }
+          # マップ情報は、latest が本体のリリースならそちらに manifest.json を付け直し、自分は latest にしない
+          $attachTo = if ('${{ steps.ver.outputs.component }}' -eq 'maps' -and $latestTag -like 'v*') { $latestTag } else { '' }
+          "attach_to=$attachTo" >> $env:GITHUB_OUTPUT
+          exit 0
+
+      - name: Build release
+        run: >
+          ./tools/make-release.ps1
+          -Component ${{ steps.ver.outputs.component }}
+          -Version ${{ steps.ver.outputs.version }}
+          -Output ${{ env.OUTPUT_DIR }}
+          ${{ steps.ver.outputs.prerelease == 'true' && '-NoManifest' || '' }}
+          -BaseUrl https://github.com/${{ github.repository }}/releases/download/${{ steps.ver.outputs.tag }}
+
+      - name: Create GitHub Release
+        uses: softprops/action-gh-release@v2
+        with:
+          tag_name: ${{ steps.ver.outputs.tag }}
+          name: ${{ steps.ver.outputs.title }}
+          generate_release_notes: true
+          # ベータはプレリリースにして latest にしない (latest の manifest.json を自動更新が見ているため)。
+          # マップ情報も、本体のリリースがあれば latest にしない (manifest.json は下で本体のリリースに付ける)
+          prerelease: ${{ steps.ver.outputs.prerelease == 'true' }}
+          make_latest: ${{ steps.ver.outputs.prerelease != 'true' && steps.latest.outputs.attach_to == '' }}
+          files: |
+            ${{ steps.ver.outputs.prerelease != 'true' && steps.latest.outputs.attach_to == '' && format('{0}/manifest.json', env.OUTPUT_DIR) || '' }}
+            ${{ env.OUTPUT_DIR }}/gGameMapOverlay*.zip
+
+      - name: Attach manifest to latest app release
+        if: steps.latest.outputs.attach_to != ''
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: gh release upload '${{ steps.latest.outputs.attach_to }}' "$env:OUTPUT_DIR/manifest.json" --repo '${{ github.repository }}' --clobber

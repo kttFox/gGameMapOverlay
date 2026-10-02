@@ -1,0 +1,216 @@
+{
+  "description": "gGame の実画面スクリーンショット (2026-09-29 撮影)。テストに使わない部分 (ゲーム画面・ステータス・チャット・通知など) は黒で塗りつぶしてある。client_rect は画像内のゲームのクライアント領域 [left, top, right, bottom]。window は Alt+PrintScreen で撮ったもので、タイトルバーと枠線を含む。maximized は最大化したウィンドウで、gGame は最大化するとタイトルバーと枠線がなくなる。ui_scale は UI の拡大率 (省略時 1.0)。",
+  "screenshots": [
+    {
+      "file": "maximized_1920x1080.png",
+      "mode": "maximized",
+      "client_rect": [
+        0,
+        0,
+        1920,
+        1080
+      ],
+      "map_name": "ディーバル",
+      "coordinates": "40:40",
+      "x": 40,
+      "y": 40,
+      "notes": "最大化 (タイトルバー・枠線なし)。上部中央にタスクバーのサムネイルが写り込んでいる"
+    },
+    {
+      "file": "window_1056x660.png",
+      "mode": "window",
+      "client_rect": [
+        1,
+        31,
+        1057,
+        691
+      ],
+      "map_name": "ディーバル",
+      "coordinates": "40:40",
+      "x": 40,
+      "y": 40,
+      "notes": ""
+    },
+    {
+      "file": "window_1056x792.png",
+      "mode": "window",
+      "client_rect": [
+        1,
+        31,
+        1057,
+        823
+      ],
+      "map_name": "ディーバル",
+      "coordinates": "40:40",
+      "x": 40,
+      "y": 40,
+      "notes": ""
+    },
+    {
+      "file": "window_1880x805.png",
+      "mode": "window",
+      "client_rect": [
+        1,
+        31,
+        1881,
+        836
+      ],
+      "map_name": "ディーバル",
+      "coordinates": "40:40",
+      "x": 40,
+      "y": 40,
+      "notes": "右下にデスクトップ通知が重なっている"
+    },
+    {
+      "file": "window_2220x951.png",
+      "mode": "window",
+      "client_rect": [
+        1,
+        31,
+        2221,
+        982
+      ],
+      "map_name": "ディーバル",
+      "coordinates": "40:40",
+      "x": 40,
+      "y": 40,
+      "notes": "上部中央にウィンドウ選択のツールチップが写り込んでいる"
+    },
+    {
+      "file": "window_1696x899.png",
+      "mode": "window",
+      "client_rect": [
+        1,
+        31,
+        1697,
+        930
+      ],
+      "map_name": "中央平原",
+      "coordinates": "90:2",
+      "x": 90,
+      "y": 2,
+      "notes": "座標が 1 桁。「マップ」「座標」ラベルが赤い"
+    },
+    {
+      "file": "window_win11_compat_1912x910.png",
+      "mode": "window",
+      "client_rect": [
+        2,
+        38,
+        1914,
+        948
+      ],
+      "map_name": "ディバル錬金術師ギルド",
+      "coordinates": "39:23",
+      "x": 39,
+      "y": 23,
+      "ui_scale": 1.185,
+      "notes": "Windows 11・画面の解像度 1920x1280・表示スケール 150%・互換モード Windows 8・全画面表示の最適化を無効。タイトルバーは上端に暗い縁が 2 行、枠線 2px。UI が約 1.185 倍 (= 1280 / 1080) に拡大されている。gGame は画面の高さが 1080 より大きいと、画面の高さ ÷ 1080 の倍率で UI を描く (1600x1200 では 1.114 倍、1366x768 では等倍。互換モードや表示スケールは無関係)"
+    },
+    {
+      "file": "window_scale125_1522x884.png",
+      "mode": "window",
+      "client_rect": [
+        1,
+        38,
+        1523,
+        922
+      ],
+      "map_name": "ディーバル倉庫",
+      "coordinates": "34:26",
+      "x": 34,
+      "y": 26,
+      "notes": "表示スケール 125%。UI は等倍"
+    },
+    {
+      "file": "window_scale125_compat8_1522x884.png",
+      "mode": "window",
+      "client_rect": [
+        1,
+        33,
+        1523,
+        917
+      ],
+      "map_name": "ディーバル倉庫",
+      "coordinates": "34:26",
+      "x": 34,
+      "y": 26,
+      "notes": "Windows 10・表示スケール 125%・互換モード Windows 8・全画面表示の最適化を無効。タイトルバーが 33px (互換モードなしの 125% は 38px)。UI は等倍"
+    },
+    {
+      "file": "window_scale150_1690x882.png",
+      "mode": "window",
+      "client_rect": [
+        1,
+        45,
+        1691,
+        927
+      ],
+      "map_name": "ディーバル倉庫",
+      "coordinates": "34:26",
+      "x": 34,
+      "y": 26,
+      "notes": "表示スケール 150%。UI は等倍"
+    },
+    {
+      "file": "window_scale175_1516x867.png",
+      "mode": "window",
+      "client_rect": [
+        1,
+        52,
+        1517,
+        919
+      ],
+      "map_name": "ディーバル倉庫",
+      "coordinates": "34:26",
+      "x": 34,
+      "y": 26,
+      "notes": "表示スケール 175%。UI は等倍"
+    },
+    {
+      "file": "maximized_scale125_1920x1080.png",
+      "mode": "maximized",
+      "client_rect": [
+        0,
+        0,
+        1920,
+        1080
+      ],
+      "map_name": "ディーバル倉庫",
+      "coordinates": "34:26",
+      "x": 34,
+      "y": 26,
+      "notes": "表示スケール 125% で最大化。UI は等倍"
+    },
+    {
+      "file": "maximized_scale150_1920x1080.png",
+      "mode": "maximized",
+      "client_rect": [
+        0,
+        0,
+        1920,
+        1080
+      ],
+      "map_name": "ディーバル倉庫",
+      "coordinates": "34:26",
+      "x": 34,
+      "y": 26,
+      "notes": "表示スケール 150% で最大化。UI は等倍"
+    },
+    {
+      "file": "maximized_scale175_1920x1080.png",
+      "mode": "maximized",
+      "client_rect": [
+        0,
+        0,
+        1920,
+        1080
+      ],
+      "map_name": "ディーバル倉庫",
+      "coordinates": "34:26",
+      "x": 34,
+      "y": 26,
+      "notes": "表示スケール 175% で最大化。UI は等倍"
+    }
+  ]
+}

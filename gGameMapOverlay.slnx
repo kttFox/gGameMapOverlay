@@ -1,0 +1,8 @@
+<Solution>
+  <Folder Name="/src/">
+    <Project Path="src/gGameMapOverlay/gGameMapOverlay.csproj" />
+  </Folder>
+  <Folder Name="/tests/">
+    <Project Path="tests/gGameMapOverlay.Tests/gGameMapOverlay.Tests.csproj" />
+  </Folder>
+</Solution>
