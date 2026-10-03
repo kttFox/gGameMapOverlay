@@ -23,9 +23,18 @@ internal sealed partial class CustomTilesForm : Form {
 	private readonly List<CustomTileGroup> groups;
 	// 編集中のグループをオーバーレイに描かせる (閉じたら null で設定のグループに戻す)。
 	private readonly Action<IReadOnlyList<CustomTileGroup>?> preview;
+	// 元に戻す・やり直すための、変える前のグループの写し。
+	private readonly Stack<List<CustomTileGroup>> undoStack = new();
+	private readonly Stack<List<CustomTileGroup>> redoStack = new();
+	// 続けて同じものを変えるとき (名前の入力など) は 1 回にまとめる。その変更の種類。
+	private string? lastEditKey;
+	// ドラッグを始めたときの写し。実際にマスが変わったら undoStack に積む。
+	private List<CustomTileGroup>? strokeSnapshot;
 	// 背景に映すゲーム画面を撮る (画像と、その画面でのマスの幅)。ゲームが見つからなければ null。
 	private readonly Func<Task<(Bitmap Image, double TileWidth)?>> captureGame;
 	private bool refreshing;
+	// 画面を表示し終えたか。
+	private bool shown;
 	// 背景に映すゲーム画面のメッセージ (撮れなかった理由など)。
 	private string gameStatus = "";
 
@@ -187,11 +196,65 @@ internal sealed partial class CustomTilesForm : Form {
 
 	private void ZoomInButton_Click( object? sender, EventArgs e ) => canvas.Zoom( 1 );
 
+	private List<CustomTileGroup> Snapshot() => groups.Select( group => group.Clone() ).ToList();
+
+	/// <summary>これから変える前の状態を、元に戻せるように覚える。key が前回と同じなら前回とまとめる。</summary>
+	private void RecordUndo( string? key = null ) {
+		if( key is not null && key == lastEditKey ) {
+			return;
+		}
+		lastEditKey = key;
+		undoStack.Push( Snapshot() );
+		redoStack.Clear();
+		RefreshUndoButtons();
+	}
+
+	private void RefreshUndoButtons() {
+		undoButton.Enabled = undoStack.Count > 0;
+		redoButton.Enabled = redoStack.Count > 0;
+	}
+
+	/// <summary>from の直前の状態に戻し、今の状態を to に積む (元に戻す・やり直す)。</summary>
+	private void Restore( Stack<List<CustomTileGroup>> from, Stack<List<CustomTileGroup>> to ) {
+		if( from.Count == 0 ) {
+			return;
+		}
+		var index = Selected is { } group ? groups.IndexOf( group ) : 0;
+		to.Push( Snapshot() );
+		groups.Clear();
+		groups.AddRange( from.Pop() );
+		lastEditKey = null;
+		RefreshList( Math.Min( index, groups.Count - 1 ) );
+		ShowPreview();
+		RefreshUndoButtons();
+	}
+
+	protected override bool ProcessCmdKey( ref Message msg, Keys keyData ) {
+		// 名前の入力中は、テキストボックス自身の元に戻すを使う。
+		if( ActiveControl is not TextBox ) {
+			// 格子の上でスペースを押すのは動かすため。フォーカスのあるボタンを押さないようにする。
+			if( keyData == Keys.Space && canvas.ClientRectangle.Contains( canvas.PointToClient( MousePosition ) ) ) {
+				return true;
+			}
+			switch( keyData ) {
+				case Keys.Control | Keys.Z:
+					Restore( undoStack, redoStack );
+					return true;
+				case Keys.Control | Keys.Y:
+				case Keys.Control | Keys.Shift | Keys.Z:
+					Restore( redoStack, undoStack );
+					return true;
+			}
+		}
+		return base.ProcessCmdKey( ref msg, keyData );
+	}
+
 	/// <summary>編集中のグループをオーバーレイに描かせる。</summary>
 	private void ShowPreview() => preview( groups );
 
 	protected override void OnShown( EventArgs e ) {
 		base.OnShown( e );
+		shown = true;
 		ShowPreview();
 		if( gameCheck.Checked ) {
 			_ = CaptureGameAsync();
@@ -236,6 +299,7 @@ internal sealed partial class CustomTilesForm : Form {
 		}
 		var added = new CustomTileGroup { Name = $"グループ {number}" };
 		added.SetColor( Palette[groups.Count % Palette.Length] );
+		RecordUndo();
 		groups.Add( added );
 		RefreshList( groups.Count - 1 );
 		ShowPreview();
@@ -251,6 +315,7 @@ internal sealed partial class CustomTilesForm : Form {
 		if( target < 0 || target >= groups.Count ) {
 			return;
 		}
+		RecordUndo();
 		( groups[index], groups[target] ) = ( groups[target], groups[index] );
 		RefreshList( target );
 		ShowPreview();
@@ -265,9 +330,11 @@ internal sealed partial class CustomTilesForm : Form {
 	}
 
 	private void GroupList_ItemChecked( object? sender, ItemCheckedEventArgs e ) {
-		if( refreshing || e.Item.Index >= groups.Count ) {
+		// ListView は表示するときにも (チェックを変えていなくても、いったん外した状態で) 通知するので、表示した後に変わったときだけ扱う。
+		if( refreshing || !shown || e.Item.Index >= groups.Count || groups[e.Item.Index].Shown == e.Item.Checked ) {
 			return;
 		}
+		RecordUndo();
 		groups[e.Item.Index].Shown = e.Item.Checked;
 		canvas.Invalidate();
 		ShowPreview();
@@ -287,6 +354,7 @@ internal sealed partial class CustomTilesForm : Form {
 			return;
 		}
 		var index = groups.IndexOf( group );
+		RecordUndo();
 		groups.RemoveAt( index );
 		RefreshList( Math.Min( index, groups.Count - 1 ) );
 		ShowPreview();
@@ -297,9 +365,10 @@ internal sealed partial class CustomTilesForm : Form {
 	private void DownButton_Click( object? sender, EventArgs e ) => MoveGroup( 1 );
 
 	private void NameBox_TextChanged( object? sender, EventArgs e ) {
-		if( refreshing || Selected is not { } group ) {
+		if( refreshing || Selected is not { } group || group.Name == nameBox.Text ) {
 			return;
 		}
+		RecordUndo( $"name:{groups.IndexOf( group )}" );
 		group.Name = nameBox.Text;
 		groupList.Items[groups.IndexOf( group )].Text = group.Name;
 		ShowStatus();
@@ -313,15 +382,18 @@ internal sealed partial class CustomTilesForm : Form {
 		if( dialog.ShowDialog( this ) != DialogResult.OK ) {
 			return;
 		}
+		RecordUndo();
 		group.SetColor( dialog.Color );
 		RefreshList( groups.IndexOf( group ) );
 		ShowPreview();
 	}
 
 	private void OpacityBox_ValueChanged( object? sender, EventArgs e ) {
-		if( refreshing || Selected is not { } group ) {
+		if( refreshing || Selected is not { } group
+			|| ( group.OwnOpacity == opacityCheck.Checked && ( !group.OwnOpacity || group.Opacity == (int)opacityBox.Value ) ) ) {
 			return;
 		}
+		RecordUndo( $"opacity:{groups.IndexOf( group )}" );
 		group.OwnOpacity = opacityCheck.Checked;
 		if( group.OwnOpacity ) {
 			group.Opacity = (int)opacityBox.Value; // チェックを入れたときは今の値 (全体の値) から始める
@@ -339,7 +411,16 @@ internal sealed partial class CustomTilesForm : Form {
 		RefreshShapeImages();
 	}
 
+	private void Canvas_StrokeStarting( object? sender, EventArgs e ) => strokeSnapshot = Snapshot();
+
 	private void Canvas_CellsChanged( object? sender, EventArgs e ) {
+		if( strokeSnapshot is not null ) { // ドラッグ 1 回を 1 回の変更として戻せるように
+			undoStack.Push( strokeSnapshot );
+			redoStack.Clear();
+			strokeSnapshot = null;
+			lastEditKey = null;
+			RefreshUndoButtons();
+		}
 		ShowStatus();
 		ShowPreview();
 	}
@@ -360,6 +441,10 @@ internal sealed partial class CustomTilesForm : Form {
 			ShowStatus();
 		}
 	}
+
+	private void UndoButton_Click( object? sender, EventArgs e ) => Restore( undoStack, redoStack );
+
+	private void RedoButton_Click( object? sender, EventArgs e ) => Restore( redoStack, undoStack );
 
 	private void RecaptureButton_Click( object? sender, EventArgs e ) => _ = CaptureGameAsync();
 }

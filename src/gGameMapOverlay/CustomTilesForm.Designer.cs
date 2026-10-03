@@ -55,11 +55,15 @@ partial class CustomTilesForm
 		this.thicknessCaption = new Label();
 		this.thicknessBox = new ComboBox();
 		this.helpLabel = new Label();
-		this.canvas = new CustomTilesCanvas();
+		this.toolPanel = new TableLayoutPanel();
+		this.undoPanel = new FlowLayoutPanel();
+		this.undoButton = new Button();
+		this.redoButton = new Button();
 		this.zoomPanel = new FlowLayoutPanel();
 		this.zoomOutButton = new Button();
 		this.zoomResetButton = new Button();
 		this.zoomInButton = new Button();
+		this.canvas = new CustomTilesCanvas();
 		this.bottomPanel = new TableLayoutPanel();
 		this.gameCheck = new CheckBox();
 		this.recaptureButton = new Button();
@@ -74,7 +78,8 @@ partial class CustomTilesForm
 		this.opacityPanel.SuspendLayout();
 		( this.opacityBox ).BeginInit();
 		this.thicknessPanel.SuspendLayout();
-		this.canvas.SuspendLayout();
+		this.toolPanel.SuspendLayout();
+		this.undoPanel.SuspendLayout();
 		this.zoomPanel.SuspendLayout();
 		this.bottomPanel.SuspendLayout();
 		this.SuspendLayout();
@@ -85,13 +90,15 @@ partial class CustomTilesForm
 		this.mainPanel.ColumnStyles.Add( new ColumnStyle() );
 		this.mainPanel.ColumnStyles.Add( new ColumnStyle( SizeType.Percent, 100F ) );
 		this.mainPanel.Controls.Add( this.sidePanel, 0, 0 );
-		this.mainPanel.Controls.Add( this.canvas, 1, 0 );
-		this.mainPanel.Controls.Add( this.bottomPanel, 0, 1 );
+		this.mainPanel.Controls.Add( this.toolPanel, 1, 0 );
+		this.mainPanel.Controls.Add( this.canvas, 1, 1 );
+		this.mainPanel.Controls.Add( this.bottomPanel, 0, 2 );
 		this.mainPanel.Dock = DockStyle.Fill;
 		this.mainPanel.Location = new Point( 0, 0 );
 		this.mainPanel.Name = "mainPanel";
 		this.mainPanel.Padding = new Padding( 6 );
-		this.mainPanel.RowCount = 2;
+		this.mainPanel.RowCount = 3;
+		this.mainPanel.RowStyles.Add( new RowStyle() );
 		this.mainPanel.RowStyles.Add( new RowStyle( SizeType.Percent, 100F ) );
 		this.mainPanel.RowStyles.Add( new RowStyle() );
 		this.mainPanel.Size = new Size( 900, 660 );
@@ -115,6 +122,7 @@ partial class CustomTilesForm
 		this.sidePanel.Margin = new Padding( 3, 3, 9, 3 );
 		this.sidePanel.Name = "sidePanel";
 		this.sidePanel.RowCount = 8;
+		this.mainPanel.SetRowSpan( this.sidePanel, 2 );
 		this.sidePanel.RowStyles.Add( new RowStyle() );
 		this.sidePanel.RowStyles.Add( new RowStyle( SizeType.Percent, 100F ) );
 		this.sidePanel.RowStyles.Add( new RowStyle() );
@@ -147,7 +155,7 @@ partial class CustomTilesForm
 		this.groupList.MinimumSize = new Size( 214, 50 );
 		this.groupList.MultiSelect = false;
 		this.groupList.Name = "groupList";
-		this.groupList.Size = new Size( 214, 291 );
+		this.groupList.Size = new Size( 214, 276 );
 		this.groupList.SmallImageList = this.swatches;
 		this.groupList.TabIndex = 1;
 		this.groupList.UseCompatibleStateImageBehavior = false;
@@ -173,7 +181,7 @@ partial class CustomTilesForm
 		this.groupButtons.Controls.Add( this.removeButton );
 		this.groupButtons.Controls.Add( this.upButton );
 		this.groupButtons.Controls.Add( this.downButton );
-		this.groupButtons.Location = new Point( 0, 315 );
+		this.groupButtons.Location = new Point( 0, 300 );
 		this.groupButtons.Margin = new Padding( 0 );
 		this.groupButtons.Name = "groupButtons";
 		this.groupButtons.Size = new Size( 220, 31 );
@@ -237,7 +245,7 @@ partial class CustomTilesForm
 		this.propertyPanel.Controls.Add( this.colorButton, 1, 1 );
 		this.propertyPanel.Controls.Add( this.opacityCaption, 0, 2 );
 		this.propertyPanel.Controls.Add( this.opacityPanel, 1, 2 );
-		this.propertyPanel.Location = new Point( 0, 352 );
+		this.propertyPanel.Location = new Point( 0, 337 );
 		this.propertyPanel.Margin = new Padding( 0, 6, 0, 0 );
 		this.propertyPanel.Name = "propertyPanel";
 		this.propertyPanel.RowCount = 3;
@@ -350,7 +358,7 @@ partial class CustomTilesForm
 		// shapeCaption
 		// 
 		this.shapeCaption.AutoSize = true;
-		this.shapeCaption.Location = new Point( 3, 445 );
+		this.shapeCaption.Location = new Point( 3, 430 );
 		this.shapeCaption.Margin = new Padding( 3, 6, 3, 3 );
 		this.shapeCaption.Name = "shapeCaption";
 		this.shapeCaption.Size = new Size( 38, 15 );
@@ -360,7 +368,7 @@ partial class CustomTilesForm
 		// shapePanel
 		// 
 		this.shapePanel.AutoSize = true;
-		this.shapePanel.Location = new Point( 0, 463 );
+		this.shapePanel.Location = new Point( 0, 448 );
 		this.shapePanel.Margin = new Padding( 0 );
 		this.shapePanel.MaximumSize = new Size( 220, 0 );
 		this.shapePanel.Name = "shapePanel";
@@ -372,7 +380,7 @@ partial class CustomTilesForm
 		this.thicknessPanel.AutoSize = true;
 		this.thicknessPanel.Controls.Add( this.thicknessCaption );
 		this.thicknessPanel.Controls.Add( this.thicknessBox );
-		this.thicknessPanel.Location = new Point( 0, 466 );
+		this.thicknessPanel.Location = new Point( 0, 451 );
 		this.thicknessPanel.Margin = new Padding( 0, 3, 0, 0 );
 		this.thicknessPanel.Name = "thicknessPanel";
 		this.thicknessPanel.Size = new Size( 140, 29 );
@@ -401,38 +409,81 @@ partial class CustomTilesForm
 		// 
 		this.helpLabel.AutoSize = true;
 		this.helpLabel.ForeColor = Color.FromArgb( 117, 117, 117 );
-		this.helpLabel.Location = new Point( 3, 501 );
+		this.helpLabel.Location = new Point( 3, 486 );
 		this.helpLabel.Margin = new Padding( 3, 6, 3, 0 );
 		this.helpLabel.MaximumSize = new Size( 214, 0 );
 		this.helpLabel.Name = "helpLabel";
-		this.helpLabel.Size = new Size( 207, 105 );
+		this.helpLabel.Size = new Size( 207, 120 );
 		this.helpLabel.TabIndex = 5;
-		this.helpLabel.Text = "左クリック: 描く\r\n右クリック: 消す\r\nホイール: 拡大・縮小\r\nホイールドラッグ / Space+ドラッグ: 移動\r\n\r\n黄色の枠がキャラクターのいるマスです。\r\n描いたマスはキャラクターと一緒に動きます。";
+		this.helpLabel.Text = "左クリック: 描く\r\n右クリック: 消す\r\nホイール: 拡大・縮小\r\nホイールドラッグ / Space: 移動\r\nCtrl+Z / Ctrl+Y: 元に戻す / やり直し\r\n\r\n黄色の枠がキャラクターのいるマスです。\r\n描いたマスはキャラクターと一緒に動きます。";
 		// 
-		// canvas
+		// toolPanel
 		// 
-		this.canvas.BackColor = Color.FromArgb( 32, 32, 32 );
-		this.canvas.Controls.Add( this.zoomPanel );
-		this.canvas.Dock = DockStyle.Fill;
-		this.canvas.Location = new Point( 241, 9 );
-		this.canvas.MinimumSize = new Size( 320, 200 );
-		this.canvas.Name = "canvas";
-		this.canvas.Size = new Size( 650, 606 );
-		this.canvas.TabIndex = 1;
-		this.canvas.CellsChanged +=  this.Canvas_CellsChanged ;
-		this.canvas.HoverChanged +=  this.Canvas_HoverChanged ;
-		this.canvas.ZoomChanged +=  this.Canvas_ZoomChanged ;
+		this.toolPanel.AutoSize = true;
+		this.toolPanel.AutoSizeMode = AutoSizeMode.GrowAndShrink;
+		this.toolPanel.ColumnCount = 3;
+		this.toolPanel.ColumnStyles.Add( new ColumnStyle() );
+		this.toolPanel.ColumnStyles.Add( new ColumnStyle( SizeType.Percent, 100F ) );
+		this.toolPanel.ColumnStyles.Add( new ColumnStyle() );
+		this.toolPanel.Controls.Add( this.undoPanel, 0, 0 );
+		this.toolPanel.Controls.Add( this.zoomPanel, 2, 0 );
+		this.toolPanel.Dock = DockStyle.Fill;
+		this.toolPanel.Location = new Point( 238, 6 );
+		this.toolPanel.Margin = new Padding( 0 );
+		this.toolPanel.Name = "toolPanel";
+		this.toolPanel.RowCount = 1;
+		this.toolPanel.RowStyles.Add( new RowStyle() );
+		this.toolPanel.Size = new Size( 656, 32 );
+		this.toolPanel.TabIndex = 3;
+		// 
+		// undoPanel
+		// 
+		this.undoPanel.AutoSize = true;
+		this.undoPanel.AutoSizeMode = AutoSizeMode.GrowAndShrink;
+		this.undoPanel.Controls.Add( this.undoButton );
+		this.undoPanel.Controls.Add( this.redoButton );
+		this.undoPanel.Location = new Point( 0, 0 );
+		this.undoPanel.Margin = new Padding( 0 );
+		this.undoPanel.Name = "undoPanel";
+		this.undoPanel.Size = new Size( 162, 31 );
+		this.undoPanel.TabIndex = 1;
+		this.undoPanel.WrapContents = false;
+		// 
+		// undoButton
+		// 
+		this.undoButton.AutoSize = true;
+		this.undoButton.Enabled = false;
+		this.undoButton.Location = new Point( 3, 3 );
+		this.undoButton.Name = "undoButton";
+		this.undoButton.Size = new Size( 75, 25 );
+		this.undoButton.TabIndex = 0;
+		this.undoButton.Text = "元に戻す";
+		this.shapeTip.SetToolTip( this.undoButton, "元に戻す (Ctrl+Z)" );
+		this.undoButton.UseVisualStyleBackColor = true;
+		this.undoButton.Click +=  this.UndoButton_Click ;
+		// 
+		// redoButton
+		// 
+		this.redoButton.AutoSize = true;
+		this.redoButton.Enabled = false;
+		this.redoButton.Location = new Point( 84, 3 );
+		this.redoButton.Name = "redoButton";
+		this.redoButton.Size = new Size( 75, 25 );
+		this.redoButton.TabIndex = 1;
+		this.redoButton.Text = "やり直し";
+		this.shapeTip.SetToolTip( this.redoButton, "やり直し (Ctrl+Y)" );
+		this.redoButton.UseVisualStyleBackColor = true;
+		this.redoButton.Click +=  this.RedoButton_Click ;
 		// 
 		// zoomPanel
 		// 
-		this.zoomPanel.Anchor =  AnchorStyles.Bottom  |  AnchorStyles.Right ;
+		this.zoomPanel.Anchor = AnchorStyles.Right;
 		this.zoomPanel.AutoSize = true;
 		this.zoomPanel.AutoSizeMode = AutoSizeMode.GrowAndShrink;
-		this.zoomPanel.BackColor = Color.Transparent;
 		this.zoomPanel.Controls.Add( this.zoomOutButton );
 		this.zoomPanel.Controls.Add( this.zoomResetButton );
 		this.zoomPanel.Controls.Add( this.zoomInButton );
-		this.zoomPanel.Location = new Point( 512, 568 );
+		this.zoomPanel.Location = new Point( 524, 0 );
 		this.zoomPanel.Margin = new Padding( 0 );
 		this.zoomPanel.Name = "zoomPanel";
 		this.zoomPanel.Size = new Size( 132, 32 );
@@ -469,6 +520,20 @@ partial class CustomTilesForm
 		this.zoomInButton.Text = "+";
 		this.zoomInButton.UseVisualStyleBackColor = true;
 		this.zoomInButton.Click +=  this.ZoomInButton_Click ;
+		// 
+		// canvas
+		// 
+		this.canvas.BackColor = Color.FromArgb( 32, 32, 32 );
+		this.canvas.Dock = DockStyle.Fill;
+		this.canvas.Location = new Point( 241, 41 );
+		this.canvas.MinimumSize = new Size( 320, 200 );
+		this.canvas.Name = "canvas";
+		this.canvas.Size = new Size( 650, 574 );
+		this.canvas.TabIndex = 1;
+		this.canvas.CellsChanged +=  this.Canvas_CellsChanged ;
+		this.canvas.StrokeStarting +=  this.Canvas_StrokeStarting ;
+		this.canvas.HoverChanged +=  this.Canvas_HoverChanged ;
+		this.canvas.ZoomChanged +=  this.Canvas_ZoomChanged ;
 		// 
 		// bottomPanel
 		// 
@@ -511,7 +576,7 @@ partial class CustomTilesForm
 		// 
 		this.recaptureButton.Anchor = AnchorStyles.Left;
 		this.recaptureButton.AutoSize = true;
-		this.recaptureButton.Location = new Point( 202, 5 );
+		this.recaptureButton.Location = new Point( 119, 5 );
 		this.recaptureButton.Margin = new Padding( 3, 3, 12, 3 );
 		this.recaptureButton.Name = "recaptureButton";
 		this.recaptureButton.Size = new Size( 75, 25 );
@@ -524,7 +589,7 @@ partial class CustomTilesForm
 		// 
 		this.statusLabel.Anchor = AnchorStyles.Left;
 		this.statusLabel.AutoSize = true;
-		this.statusLabel.Location = new Point( 292, 10 );
+		this.statusLabel.Location = new Point( 209, 10 );
 		this.statusLabel.Name = "statusLabel";
 		this.statusLabel.Size = new Size( 12, 15 );
 		this.statusLabel.TabIndex = 2;
@@ -579,8 +644,10 @@ partial class CustomTilesForm
 		( this.opacityBox ).EndInit();
 		this.thicknessPanel.ResumeLayout( false );
 		this.thicknessPanel.PerformLayout();
-		this.canvas.ResumeLayout( false );
-		this.canvas.PerformLayout();
+		this.toolPanel.ResumeLayout( false );
+		this.toolPanel.PerformLayout();
+		this.undoPanel.ResumeLayout( false );
+		this.undoPanel.PerformLayout();
 		this.zoomPanel.ResumeLayout( false );
 		this.bottomPanel.ResumeLayout( false );
 		this.bottomPanel.PerformLayout();
@@ -618,6 +685,7 @@ partial class CustomTilesForm
 	private ToolTip shapeTip;
 	private Label helpLabel;
 	private CustomTilesCanvas canvas;
+	private TableLayoutPanel toolPanel;
 	private FlowLayoutPanel zoomPanel;
 	private Button zoomOutButton;
 	private Button zoomResetButton;
@@ -626,6 +694,9 @@ partial class CustomTilesForm
 	private Label statusLabel;
 	private CheckBox gameCheck;
 	private Button recaptureButton;
+	private FlowLayoutPanel undoPanel;
+	private Button undoButton;
+	private Button redoButton;
 	private Button okButton;
 	private Button cancelButton;
 }

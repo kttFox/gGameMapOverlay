@@ -6,7 +6,7 @@ namespace gGameMapOverlay;
 
 /// <summary>
 /// 自分で描くマス (カスタム) を編集する、キャラクターを中央に置いた格子。
-/// 左ボタンで選んでいる形 (Shape) を描き、右ボタンで消す (押したままドラッグで続けて)。ホイールで拡大・縮小し、ホイールを押して (またはスペースを押しながら左ボタンで) ドラッグで動かす。
+/// 左ボタンで選んでいる形 (Shape) を描き、右ボタンで消す (押したままドラッグで続けて)。ホイールで拡大・縮小し、ホイールを押してドラッグするか、スペースを押しながらマウスを動かして動かす。
 /// </summary>
 internal sealed class CustomTilesCanvas : Control
 {
@@ -27,6 +27,8 @@ internal sealed class CustomTilesCanvas : Control
     // ホイールを押してドラッグで動かした量 (マスの幅を 1 とした画面上の量)。
     private (double X, double Y) pan;
     private Point? panFrom;
+    // スペースを押しながらマウスを動かしているときの、前の位置 (ボタンを押さなくても動かす)。
+    private Point? spaceFrom;
 
     private ((int X, int Y) Cell, (int X, int Y) Part)? hover;
     private bool? painting; // ドラッグ中なら、描く (true) か消す (false) か
@@ -113,6 +115,9 @@ internal sealed class CustomTilesCanvas : Control
 
     /// <summary>マスを描いた・消したとき。</summary>
     public event EventHandler? CellsChanged;
+
+    /// <summary>描く・消すドラッグを始める直前 (まだマスを変えていない)。</summary>
+    public event EventHandler? StrokeStarting;
 
     /// <summary>マウスの下のマス (キャラクターからの相対位置) が変わったとき。</summary>
     public event EventHandler? HoverChanged;
@@ -226,12 +231,30 @@ internal sealed class CustomTilesCanvas : Control
         painting = e.Button == MouseButtons.Left;
         lastPainted = null;
         Capture = true;
+        StrokeStarting?.Invoke(this, EventArgs.Empty);
         PaintAt(TargetAt(e.Location));
     }
 
     protected override void OnMouseMove(MouseEventArgs e)
     {
         base.OnMouseMove(e);
+        if (panFrom is null && painting is null && IsSpaceDown())
+        {
+            if (spaceFrom is { } last)
+            {
+                var tile = Grid().TileWidth;
+                pan = (pan.X + (e.X - last.X) / tile, pan.Y + (e.Y - last.Y) / tile);
+                Invalidate();
+            }
+            spaceFrom = e.Location;
+            Cursor = Cursors.SizeAll;
+            return;
+        }
+        if (spaceFrom is not null)
+        {
+            spaceFrom = null;
+            Cursor = Cursors.Default;
+        }
         if (panFrom is { } from)
         {
             var width = Grid().TileWidth;
