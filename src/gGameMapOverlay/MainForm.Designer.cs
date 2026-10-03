@@ -254,6 +254,7 @@ partial class MainForm
 		// 
 		// nameValue
 		// 
+		this.nameValue.AutoEllipsis = true;
 		this.nameValue.Font = new Font( "Yu Gothic UI", 16F, FontStyle.Bold );
 		this.nameValue.Location = new Point( 3, 0 );
 		this.nameValue.Name = "nameValue";
@@ -261,6 +262,7 @@ partial class MainForm
 		this.nameValue.TabIndex = 0;
 		this.nameValue.Text = "—";
 		this.nameValue.TextAlign = ContentAlignment.MiddleLeft;
+		this.nameValue.TextChanged +=  this.NameValue_TextChanged ;
 		// 
 		// mapSelect
 		// 

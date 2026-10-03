@@ -359,6 +359,23 @@ internal sealed partial class MainForm : Form, ISettingsHost, IInfoSource {
 
 	private void CustomTilesButton_Click( object? sender, EventArgs e ) => ShowCustomTiles();
 
+	// マップ名が幅に収まらないときは 16pt から段階的に縮め、下限でも入らない分は AutoEllipsis で省略する
+	static readonly float[] NameFontSizes = [16F, 14F, 12F, 10F, 9F];
+
+	private void NameValue_TextChanged( object? sender, EventArgs e ) {
+		var baseFont = nameValue.Font;
+		float size = NameFontSizes[^1];
+		foreach( var s in NameFontSizes ) {
+			using var f = new Font( baseFont.FontFamily, s, baseFont.Style );
+			var w = TextRenderer.MeasureText( nameValue.Text, f, Size.Empty, TextFormatFlags.NoPadding ).Width;
+			if( w <= nameValue.ClientSize.Width - nameValue.Padding.Horizontal - 4 ) { size = s; break; }
+		}
+		if( baseFont.Size != size ) {
+			nameValue.Font = new Font( baseFont.FontFamily, size, baseFont.Style );
+			baseFont.Dispose();
+		}
+	}
+
 	private void SetStatus( string text, Color color ) {
 		statusLabel.Text = text;
 		statusLabel.ForeColor = color;
