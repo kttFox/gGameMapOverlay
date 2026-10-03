@@ -228,7 +228,7 @@ public sealed class AppConfig
 
     /// <summary>描くカスタムのグループ (表示していて、マスがあるもの)。</summary>
     [JsonIgnore]
-    public IEnumerable<CustomTileGroup> ShownCustomGroups => CustomGroups.Where(group => group.Shown && group.Cells.Count > 0);
+    public IEnumerable<CustomTileGroup> ShownCustomGroups => CustomGroups.Where(group => group.Shown && group.CellCount > 0);
 
     /// <summary>カスタムの編集画面で、背景にゲーム画面を映す。</summary>
     public bool CustomEditorShowGame { get; set; }

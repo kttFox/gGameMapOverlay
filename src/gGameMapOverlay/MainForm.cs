@@ -932,7 +932,7 @@ internal sealed partial class MainForm : Form, ISettingsHost, IInfoSource {
 			antiAliasCheck.Checked = config.OverlayAntiAlias;
 			customTilesButton.Visible = config.ShowCustomTilesButton;
 			LoadCustomControls();
-			customTiles = config.ShownCustomGroups.Select( group => group.ToCustomTiles( config.OverlayOpacity ) ).ToList();
+			customTiles = config.ShownCustomGroups.SelectMany( group => group.ToCustomTiles( config.OverlayOpacity ) ).ToList();
 		} finally {
 			loadingLayers = false;
 		}
@@ -987,7 +987,9 @@ internal sealed partial class MainForm : Form, ISettingsHost, IInfoSource {
 			own.Checked = groups[i].OwnOpacity;
 			opacity.Enabled = own.Checked;
 			opacity.Value = Math.Clamp( groups[i].GetOpacity( config.OverlayOpacity ), opacity.Minimum, opacity.Maximum );
-			swatch.BackColor = Color.FromArgb( 255, groups[i].GetColor() ); // 見本は不透明で見せる
+			var old = swatch.BackgroundImage;
+			swatch.BackgroundImage = CustomTilesForm.Swatch( groups[i], swatch.ClientSize ); // レイヤーの色を並べる
+			old?.Dispose();
 			box.Text = groups[i].Name.Length > 0 ? groups[i].Name : "(名前なし)";
 			box.Checked = groups[i].Shown;
 		}
@@ -1183,8 +1185,8 @@ internal sealed partial class MainForm : Form, ISettingsHost, IInfoSource {
 
 	/// <summary>編集中のグループ groups を、保存せずにオーバーレイに描く。null なら設定のグループに戻す。</summary>
 	private void PreviewCustomTiles( IReadOnlyList<CustomTileGroup>? groups ) {
-		customTiles = ( groups ?? config.CustomGroups ).Where( group => group.Shown && group.Cells.Count > 0 )
-			.Select( group => group.ToCustomTiles( config.OverlayOpacity ) ).ToList();
+		customTiles = ( groups ?? config.CustomGroups ).Where( group => group.Shown && group.CellCount > 0 )
+			.SelectMany( group => group.ToCustomTiles( config.OverlayOpacity ) ).ToList();
 		if( !ImageMode && running && lastLiveReading is not null ) {
 			UpdateOverlay( lastLiveReading );
 		}

@@ -44,9 +44,13 @@ internal sealed class CustomTilesCanvas : Control
     [System.ComponentModel.DesignerSerializationVisibility(System.ComponentModel.DesignerSerializationVisibility.Hidden)]
     public IReadOnlyList<CustomTileGroup> Groups { get; set; } = [];
 
-    /// <summary>描く・消す対象のグループ。null なら描こうとしたときに RequestGroup で作ってもらう。</summary>
+    /// <summary>選んでいるグループ (表示していなくても描く)。</summary>
     [System.ComponentModel.DesignerSerializationVisibility(System.ComponentModel.DesignerSerializationVisibility.Hidden)]
-    public CustomTileGroup? Selected { get; set; }
+    public CustomTileGroup? SelectedGroup { get; set; }
+
+    /// <summary>描く・消す対象のレイヤー (SelectedGroup の中の 1 つ)。null なら描こうとしたときに RequestLayer で作ってもらう。</summary>
+    [System.ComponentModel.DesignerSerializationVisibility(System.ComponentModel.DesignerSerializationVisibility.Hidden)]
+    public CustomTileLayer? Selected { get; set; }
 
     private Bitmap? gameImage;
     private double gameTileWidth;
@@ -109,9 +113,9 @@ internal sealed class CustomTilesCanvas : Control
     [System.ComponentModel.DesignerSerializationVisibility(System.ComponentModel.DesignerSerializationVisibility.Hidden)]
     public int OverallOpacity { get; set; } = AppConfig.DefaultOverlayOpacity;
 
-    /// <summary>グループがないときに描こうとしたら呼ぶ。作ったグループを返す。</summary>
+    /// <summary>グループがないときに描こうとしたら呼ぶ。作ったグループのレイヤーを返す。</summary>
     [System.ComponentModel.DesignerSerializationVisibility(System.ComponentModel.DesignerSerializationVisibility.Hidden)]
-    public Func<CustomTileGroup?>? RequestGroup { get; set; }
+    public Func<CustomTileLayer?>? RequestLayer { get; set; }
 
     /// <summary>マスを描いた・消したとき。</summary>
     public event EventHandler? CellsChanged;
@@ -171,15 +175,15 @@ internal sealed class CustomTilesCanvas : Control
             using (var layerGraphics = Graphics.FromImage(layer))
             {
                 layerGraphics.SmoothingMode = SmoothingMode.AntiAlias;
-                foreach (var group in Groups.Where(group => group.Shown || group == Selected))
+                foreach (var tiles in Groups.Where(group => group.Shown || group == SelectedGroup).SelectMany(group => group.ToCustomTiles(OverallOpacity)))
                 {
-                    OverlayForm.DrawCustomTiles(layerGraphics, grid, group.ToCustomTiles(OverallOpacity), visible);
+                    OverlayForm.DrawCustomTiles(layerGraphics, grid, tiles, visible);
                 }
                 if (hover is { } target && panFrom is null)
                 {
                     // 描くとどうなるかの見本 (小さいマスずつなら、その小さいマス)。
                     var mask = Shape.Mask == 0 ? CustomTileShape.PartMask(target.Part.X, target.Part.Y) : Shape.Mask;
-                    var preview = new CustomTileGroup { Cells = [[target.Cell.X, target.Cell.Y, mask, Thickness]] };
+                    var preview = new CustomTileLayer { Cells = [[target.Cell.X, target.Cell.Y, mask, Thickness]] };
                     OverlayForm.DrawCustomTiles(layerGraphics, grid, preview.ToCustomTiles() with { Color = PreviewColor }, visible);
                 }
             }
@@ -222,12 +226,12 @@ internal sealed class CustomTilesCanvas : Control
         {
             return;
         }
-        var group = Selected ?? RequestGroup?.Invoke();
-        if (group is null)
+        var layer = Selected ?? RequestLayer?.Invoke();
+        if (layer is null)
         {
             return;
         }
-        Selected = group;
+        Selected = layer;
         painting = e.Button == MouseButtons.Left;
         lastPainted = null;
         Capture = true;
@@ -349,16 +353,16 @@ internal sealed class CustomTilesCanvas : Control
         {
             target = (target.Cell, (0, 0)); // 小さいマスの違いは見ない (同じマスで描き直さない)
         }
-        if (painting is not { } on || Selected is not { } group || target == lastPainted)
+        if (painting is not { } on || Selected is not { } layer || target == lastPainted)
         {
             return;
         }
         lastPainted = target;
         var (x, y) = target.Cell;
         var mask = !free ? (on ? Shape.Mask : 0)
-            : on ? group.MaskAt(x, y) | CustomTileShape.PartMask(target.Part.X, target.Part.Y)
-            : group.MaskAt(x, y) & ~CustomTileShape.PartMask(target.Part.X, target.Part.Y);
-        if (group.SetCell(x, y, mask, on ? Thickness : group.ThicknessAt(x, y)))
+            : on ? layer.MaskAt(x, y) | CustomTileShape.PartMask(target.Part.X, target.Part.Y)
+            : layer.MaskAt(x, y) & ~CustomTileShape.PartMask(target.Part.X, target.Part.Y);
+        if (layer.SetCell(x, y, mask, on ? Thickness : layer.ThicknessAt(x, y)))
         {
             Invalidate();
             CellsChanged?.Invoke(this, EventArgs.Empty);
