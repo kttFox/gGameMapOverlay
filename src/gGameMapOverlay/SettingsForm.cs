@@ -45,13 +45,11 @@ internal interface ISettingsHost
     /// <summary>情報画面 (移動の状態・歩く速さ・ログ) を開く。</summary>
     void ShowInfo();
 
-    /// <summary>自分で描くマス (カスタム) の編集画面を開く。</summary>
-    void ShowCustomTiles();
 }
 
 /// <summary>
-/// 読み取り領域・言語・OCR エンジン・読み取りの速さ・マップ名の確定・オーバーレイの色の設定画面。変更はその場で反映・保存する。
-/// (オーバーレイの種類ごとの表示の切り替えはメイン画面で行う。)
+/// 読み取り領域・言語・OCR エンジン・読み取りの速さ・マップ名の確定・オーバーレイの移動の設定画面。変更はその場で反映・保存する。
+/// (オーバーレイの種類ごとの表示・色・不透明度はメイン画面で設定する。)
 /// 開いたままゲームを操作できるよう、モードレスで表示する。
 /// </summary>
 internal sealed partial class SettingsForm : Form {
@@ -60,153 +58,25 @@ internal sealed partial class SettingsForm : Form {
 	private static readonly string[] BackendKeys = ["paddle", "windows", "none"];
 
 	private readonly ISettingsHost host;
-	// 種類ごとの色のボタン (デザイナーで配置)。
-	private readonly Dictionary<OverlayLayer, Button> colorButtons;
 	private bool refreshing;
 
 	public SettingsForm( ISettingsHost host ) {
 		this.host = host;
 		InitializeComponent();
-		colorButtons = new() {
-			[OverlayLayer.ImpassableEdge] = impassableEdgeColorButton,
-			[OverlayLayer.MonsterBlock] = monsterBlockColorButton,
-			[OverlayLayer.MapMove] = mapMoveColorButton,
-			[OverlayLayer.Special] = specialColorButton,
-		};
 		// 選べるスレッド数は CPU のコア数で変わるので、項目はここで作る (先頭は自動)。
 		threadsBox.Items.Add( $"自動 ({AppConfig.AutoOcrThreads})" );
 		for( var threads = 1; threads <= AppConfig.MaxOcrThreads; threads++ ) {
 			threadsBox.Items.Add( threads.ToString() );
 		}
-		keyDelayBox.Maximum = AppConfig.MaxMoveKeyDelayMs;
-		startCheckBox.Maximum = AppConfig.MaxMoveStartCheckMs;
-		inputLagBox.Maximum = AppConfig.MaxMoveInputLagMs;
 		// 移動速度: 先頭は自動 (表示は RefreshValues で今の等級に合わせる)、続けて等級 0〜4。
 		moveSpeedBox.Items.Add( "自動" );
 		moveSpeedBox.Items.AddRange( WalkSpeed.Grades.Select( g => g.Name ).ToArray() );
-		overlaySlideBox.Minimum = AppConfig.MinOverlaySlideMs;
-		overlaySlideBox.Maximum = AppConfig.MaxOverlaySlideMs;
-		nameRefreshBox.Minimum = (decimal)AppConfig.MinNameRefreshSeconds;
-		nameRefreshBox.Maximum = (decimal)AppConfig.MaxNameRefreshSeconds;
-		nameConfirmBox.Maximum = AppConfig.MaxNameConfirmHits;
-		nameHoldBox.Minimum = (decimal)AppConfig.MinNameHoldSeconds;
-		nameHoldBox.Maximum = (decimal)AppConfig.MaxNameHoldSeconds;
-		opacityRows.AddRange( [
-			(OverlayLayer.ImpassableEdge.Key, impassableEdgeOpacityCheck, impassableEdgeOpacityBox),
-			(OverlayLayer.MonsterBlock.Key, monsterBlockOpacityCheck, monsterBlockOpacityBox),
-			(OverlayLayer.MapMove.Key, mapMoveOpacityCheck, mapMoveOpacityBox),
-			(OverlayLayer.Special.Key, specialOpacityCheck, specialOpacityBox),
-			(AppConfig.GridColorKey, gridOpacityCheck, gridOpacityBox),
-			(AppConfig.PlayerColorKey, playerOpacityCheck, playerOpacityBox),
-		] );
-		foreach( var box in opacityRows.Select( row => row.Box ).Append( overallOpacityBox ) ) {
-			box.Minimum = AppConfig.MinOverlayOpacity;
-			box.Maximum = AppConfig.MaxOverlayOpacity;
-		}
 		RefreshValues();
 	}
-
-	private void ChooseColor( OverlayLayer layer ) {
-		using var dialog = new ColorDialog { Color = Color.FromArgb( 255, host.Config.GetOverlayColor( layer ) ), FullOpen = true };
-		if( dialog.ShowDialog( this ) != DialogResult.OK ) {
-			return;
-		}
-		host.Config.SetOverlayColor( layer, dialog.Color );
-		host.OverlaySettingsChanged();
-		RefreshValues();
-	}
-
-	private void PlayerColorButton_Click( object? sender, EventArgs e ) {
-		using var dialog = new ColorDialog { Color = Color.FromArgb( 255, host.Config.GetPlayerColor() ), FullOpen = true };
-		if( dialog.ShowDialog( this ) != DialogResult.OK ) {
-			return;
-		}
-		host.Config.SetPlayerColor( dialog.Color );
-		host.OverlaySettingsChanged();
-		RefreshValues();
-	}
-
-	private void GridColorButton_Click( object? sender, EventArgs e ) {
-		using var dialog = new ColorDialog { Color = Color.FromArgb( 255, host.Config.GetGridColor() ), FullOpen = true };
-		if( dialog.ShowDialog( this ) != DialogResult.OK ) {
-			return;
-		}
-		host.Config.SetGridColor( dialog.Color );
-		host.OverlaySettingsChanged();
-		RefreshValues();
-	}
-
-	private void ResetColors() {
-		if( MessageBox.Show( this, "オーバーレイの色をすべて初期値に戻し、個別の不透明度をやめますか？", "色を元に戻す", MessageBoxButtons.OKCancel, MessageBoxIcon.Question, MessageBoxDefaultButton.Button2 ) != DialogResult.OK ) {
-			return;
-		}
-		host.Config.OverlayColors.Clear();
-		host.Config.OverlayOpacities.Clear(); // 全体の不透明度はそのまま
-		host.OverlaySettingsChanged();
-		RefreshValues();
-	}
-
-	// ---- イベントハンドラ (デザイナーから接続) ------------------------------------------
-
-	private void ColorButton_Click( object? sender, EventArgs e ) {
-		foreach( var (layer, button) in colorButtons ) {
-			if( button == sender ) {
-				ChooseColor( layer );
-			}
-		}
-	}
-
-	// 不透明度 (色の一覧の右、デザイナーで配置)。一番上の行が全体の不透明度。各色はチェックを入れたときだけ個別の不透明度を使い、
-	// 外しているときは全体の不透明度を (変えられない状態で) 表示する。キーは AppConfig.GetOverlayOpacity のキー。
-	private readonly List<(string Key, CheckBox Own, NumericUpDown Box)> opacityRows = [];
-
-	private void OverallOpacityBox_ValueChanged( object? sender, EventArgs e ) {
-		if( !refreshing ) {
-			host.Config.OverlayOpacity = (int)overallOpacityBox.Value;
-			host.OverlaySettingsChanged();
-			RefreshValues(); // 個別でない色の表示を全体に合わせる
-		}
-	}
-
-	private void OwnOpacityCheck_CheckedChanged( object? sender, EventArgs e ) {
-		if( refreshing ) {
-			return;
-		}
-		foreach( var (key, own, box) in opacityRows.Where( entry => entry.Own == sender ) ) {
-			if( own.Checked ) {
-				host.Config.SetOwnOpacity( key, (int)box.Value ); // 今の値 (全体の値) から始める
-			} else {
-				host.Config.ClearOwnOpacity( key );
-			}
-		}
-		host.OverlaySettingsChanged();
-		RefreshValues();
-	}
-
-	private void OpacityBox_ValueChanged( object? sender, EventArgs e ) {
-		if( refreshing ) {
-			return;
-		}
-		foreach( var (key, _, box) in opacityRows.Where( entry => entry.Box == sender ) ) {
-			host.Config.SetOwnOpacity( key, (int)box.Value );
-		}
-		host.OverlaySettingsChanged();
-	}
-
-	private void ResetColorsButton_Click( object? sender, EventArgs e ) => ResetColors();
 
 	private void ShowChunksCheck_CheckedChanged( object? sender, EventArgs e ) {
 		if( !refreshing ) {
 			host.Config.OverlayShowChunks = showChunksCheck.Checked;
-			host.OverlaySettingsChanged();
-		}
-	}
-
-	private void CustomTilesButton_Click( object? sender, EventArgs e ) => host.ShowCustomTiles();
-
-	private void AntiAliasCheck_CheckedChanged( object? sender, EventArgs e ) {
-		if( !refreshing ) {
-			host.Config.OverlayAntiAlias = antiAliasCheck.Checked;
 			host.OverlaySettingsChanged();
 		}
 	}
@@ -421,17 +291,9 @@ internal sealed partial class SettingsForm : Form {
 		host.NameSettingsChanged();
 	}
 
-	// 隠し機能: Shift を押しながら「詳細設定を表示」をオンにしたときだけ、カスタムのマスの編集ボタンを出す。
-	// 覚えるのはアプリを終了するまで (詳細設定をオフにしたら隠す)。
-	private static bool customTilesUnlocked;
-
 	private void AdvancedCheck_CheckedChanged( object? sender, EventArgs e ) {
-		if( !refreshing ) {
-			customTilesUnlocked = advancedCheck.Checked && ( ModifierKeys & Keys.Shift ) != 0;
-		}
 		advancedPanel.Visible = advancedCheck.Checked;
 		infoButton.Visible = advancedCheck.Checked; // 情報画面 (移動の状態・ログ) は詳細設定のときだけ
-		customTilesButton.Visible = advancedCheck.Checked && customTilesUnlocked;
 		FitToScreen();
 		if( !refreshing ) {
 			host.Config.ShowAdvancedSettings = advancedCheck.Checked;
@@ -560,21 +422,8 @@ internal sealed partial class SettingsForm : Form {
 			stayInTrayCheck.Checked = config.StayInTray;
 			advancedPanel.Visible = config.ShowAdvancedSettings;
 			infoButton.Visible = config.ShowAdvancedSettings;
-			customTilesButton.Visible = config.ShowAdvancedSettings && customTilesUnlocked;
 			nameRegionValue.Text = DescribeRegion( host.RegionFor( RegionKind.Name ) );
 			coordinateRegionValue.Text = DescribeRegion( host.RegionFor( RegionKind.Coordinates ) );
-			foreach( var (layer, button) in colorButtons ) {
-				button.BackColor = Color.FromArgb( 255, config.GetOverlayColor( layer ) ); // 見本は不透明で見せる
-			}
-			gridColorButton.BackColor = Color.FromArgb( 255, config.GetGridColor() );
-			playerColorButton.BackColor = Color.FromArgb( 255, config.GetPlayerColor() );
-			overallOpacityBox.Value = Math.Clamp( config.OverlayOpacity, overallOpacityBox.Minimum, overallOpacityBox.Maximum );
-			foreach( var (key, own, box) in opacityRows ) {
-				own.Checked = config.HasOwnOpacity( key );
-				box.Enabled = own.Checked;
-				box.Value = Math.Clamp( config.GetOverlayOpacity( key ), box.Minimum, box.Maximum );
-			}
-			antiAliasCheck.Checked = config.OverlayAntiAlias;
 			showChunksCheck.Checked = config.OverlayShowChunks;
 		} finally {
 			refreshing = false;
@@ -632,9 +481,5 @@ internal sealed partial class SettingsForm : Form {
 			var y = owner.Top + ( owner.Height - Height ) / 2;
 			Location = new Point( Math.Clamp( x, area.Left, Math.Max( area.Left, area.Right - Width ) ), Math.Clamp( y, area.Top, Math.Max( area.Top, area.Bottom - Height ) ) );
 		}
-	}
-
-	private void overlayPanel_Paint( object sender, PaintEventArgs e ) {
-
 	}
 }

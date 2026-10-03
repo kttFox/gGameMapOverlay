@@ -32,8 +32,6 @@ internal sealed partial class CustomTilesForm : Form {
 		this.changed = changed;
 		this.captureGame = captureGame;
 		InitializeComponent();
-		opacityBox.Minimum = AppConfig.MinOverlayOpacity;
-		opacityBox.Maximum = AppConfig.MaxOverlayOpacity;
 		canvas.Groups = config.CustomGroups;
 		canvas.PlayerColor = Color.FromArgb( 255, config.GetPlayerColor() );
 		canvas.RequestGroup = () => AddGroup();
@@ -172,7 +170,7 @@ internal sealed partial class CustomTilesForm : Form {
 
 	private void ShowStatus() {
 		var hover = canvas.HoverCell is { } cell ? $"マウスの位置: キャラクターから X {cell.X:+0;-0;0}, Y {cell.Y:+0;-0;0}　" : "";
-		var count = Selected is { } group ? $"「{group.Name}」 {group.Cells.Count} マス" : "グループなし (描くと作ります)";
+		var count = Selected is { } group ? $"「{group.Name}」 {group.Cells.Count} マス" : "グループなし";
 		statusLabel.Text = hover + count + gameStatus;
 	}
 

@@ -296,6 +296,7 @@ partial class CustomTilesForm
 		// 
 		this.opacityBox.Anchor = AnchorStyles.Left;
 		this.opacityBox.Location = new Point( 64, 61 );
+		this.opacityBox.Minimum = new decimal( new int[] { 10, 0, 0, 0 } );
 		this.opacityBox.Name = "opacityBox";
 		this.opacityBox.Size = new Size( 60, 23 );
 		this.opacityBox.TabIndex = 5;

@@ -29,32 +29,57 @@ partial class MainForm
 	private void InitializeComponent() {
 		this.components = new System.ComponentModel.Container();
 		this.bodyPanel = new TableLayoutPanel();
+		this.rawLabel = new Label();
 		this.headerPanel = new TableLayoutPanel();
 		this.statusLabel = new Label();
 		this.settingsButton = new Button();
 		this.targetCaption = new Label();
 		this.windowSelect = new ComboBox();
 		this.preview = new PictureBox();
-		this.nameCaption = new Label();
 		this.namePanel = new FlowLayoutPanel();
 		this.nameValue = new Label();
 		this.mapSelect = new ComboBox();
-		this.coordinateCaption = new Label();
-		this.coordinateValue = new Label();
-		this.rawLabel = new Label();
+		this.overlayPanel = new TableLayoutPanel();
 		this.layersPanel = new TableLayoutPanel();
-		this.impassableEdgeSwatch = new Panel();
+		this.overallOpacityLabel = new Label();
+		this.overallOpacityBox = new NumericUpDown();
+		this.overallOpacityUnit = new Label();
 		this.impassableEdgeBox = new CheckBox();
-		this.monsterBlockSwatch = new Panel();
+		this.impassableEdgeSwatch = new Button();
+		this.colorMenu = new ContextMenuStrip( this.components );
+		this.colorDefaultItem = new ToolStripMenuItem();
+		this.impassableEdgeOpacityCheck = new CheckBox();
+		this.impassableEdgeOpacityBox = new NumericUpDown();
+		this.impassableEdgeOpacityUnit = new Label();
 		this.monsterBlockBox = new CheckBox();
-		this.mapMoveSwatch = new Panel();
+		this.monsterBlockSwatch = new Button();
+		this.monsterBlockOpacityCheck = new CheckBox();
+		this.monsterBlockOpacityBox = new NumericUpDown();
+		this.monsterBlockOpacityUnit = new Label();
 		this.mapMoveBox = new CheckBox();
-		this.specialSwatch = new Panel();
+		this.mapMoveSwatch = new Button();
+		this.mapMoveOpacityCheck = new CheckBox();
+		this.mapMoveOpacityBox = new NumericUpDown();
+		this.mapMoveOpacityUnit = new Label();
 		this.specialBox = new CheckBox();
-		this.gridSwatch = new Panel();
+		this.specialSwatch = new Button();
+		this.specialOpacityCheck = new CheckBox();
+		this.specialOpacityBox = new NumericUpDown();
+		this.specialOpacityUnit = new Label();
 		this.gridBox = new CheckBox();
-		this.playerSwatch = new Panel();
+		this.gridSwatch = new Button();
+		this.gridOpacityCheck = new CheckBox();
+		this.gridOpacityBox = new NumericUpDown();
+		this.gridOpacityUnit = new Label();
 		this.playerBox = new CheckBox();
+		this.playerSwatch = new Button();
+		this.playerOpacityCheck = new CheckBox();
+		this.playerOpacityBox = new NumericUpDown();
+		this.playerOpacityUnit = new Label();
+		this.flowLayoutPanel1 = new FlowLayoutPanel();
+		this.customTilesButton = new Button();
+		this.overlayOptionPanel = new FlowLayoutPanel();
+		this.antiAliasCheck = new CheckBox();
 		this.controlsPanel = new TableLayoutPanel();
 		this.toggleButton = new Button();
 		this.updateStatusLabel = new Label();
@@ -62,6 +87,7 @@ partial class MainForm
 		this.debugPanel = new FlowLayoutPanel();
 		this.imageButton = new Button();
 		this.liveButton = new Button();
+		this.toolTip = new ToolTip( this.components );
 		this.trayIcon = new NotifyIcon( this.components );
 		this.trayMenu = new ContextMenuStrip( this.components );
 		this.trayShowItem = new ToolStripMenuItem();
@@ -72,7 +98,18 @@ partial class MainForm
 		this.headerPanel.SuspendLayout();
 		( (System.ComponentModel.ISupportInitialize)this.preview ).BeginInit();
 		this.namePanel.SuspendLayout();
+		this.overlayPanel.SuspendLayout();
 		this.layersPanel.SuspendLayout();
+		( (System.ComponentModel.ISupportInitialize)this.overallOpacityBox ).BeginInit();
+		this.colorMenu.SuspendLayout();
+		( (System.ComponentModel.ISupportInitialize)this.impassableEdgeOpacityBox ).BeginInit();
+		( (System.ComponentModel.ISupportInitialize)this.monsterBlockOpacityBox ).BeginInit();
+		( (System.ComponentModel.ISupportInitialize)this.mapMoveOpacityBox ).BeginInit();
+		( (System.ComponentModel.ISupportInitialize)this.specialOpacityBox ).BeginInit();
+		( (System.ComponentModel.ISupportInitialize)this.gridOpacityBox ).BeginInit();
+		( (System.ComponentModel.ISupportInitialize)this.playerOpacityBox ).BeginInit();
+		this.flowLayoutPanel1.SuspendLayout();
+		this.overlayOptionPanel.SuspendLayout();
 		this.controlsPanel.SuspendLayout();
 		this.debugPanel.SuspendLayout();
 		this.trayMenu.SuspendLayout();
@@ -85,23 +122,20 @@ partial class MainForm
 		this.bodyPanel.ColumnCount = 2;
 		this.bodyPanel.ColumnStyles.Add( new ColumnStyle() );
 		this.bodyPanel.ColumnStyles.Add( new ColumnStyle() );
+		this.bodyPanel.Controls.Add( this.rawLabel, 0, 3 );
 		this.bodyPanel.Controls.Add( this.headerPanel, 0, 0 );
 		this.bodyPanel.Controls.Add( this.targetCaption, 0, 1 );
 		this.bodyPanel.Controls.Add( this.windowSelect, 1, 1 );
 		this.bodyPanel.Controls.Add( this.preview, 0, 2 );
-		this.bodyPanel.Controls.Add( this.nameCaption, 0, 3 );
-		this.bodyPanel.Controls.Add( this.namePanel, 1, 3 );
-		this.bodyPanel.Controls.Add( this.coordinateCaption, 0, 4 );
-		this.bodyPanel.Controls.Add( this.coordinateValue, 1, 4 );
-		this.bodyPanel.Controls.Add( this.rawLabel, 0, 5 );
-		this.bodyPanel.Controls.Add( this.layersPanel, 0, 6 );
-		this.bodyPanel.Controls.Add( this.controlsPanel, 0, 7 );
-		this.bodyPanel.Controls.Add( this.debugPanel, 0, 8 );
+		this.bodyPanel.Controls.Add( this.namePanel, 0, 5 );
+		this.bodyPanel.Controls.Add( this.overlayPanel, 0, 6 );
+		this.bodyPanel.Controls.Add( this.controlsPanel, 0, 8 );
+		this.bodyPanel.Controls.Add( this.debugPanel, 0, 9 );
 		this.bodyPanel.Dock = DockStyle.Fill;
 		this.bodyPanel.Location = new Point( 0, 0 );
 		this.bodyPanel.Name = "bodyPanel";
 		this.bodyPanel.Padding = new Padding( 12 );
-		this.bodyPanel.RowCount = 9;
+		this.bodyPanel.RowCount = 10;
 		this.bodyPanel.RowStyles.Add( new RowStyle() );
 		this.bodyPanel.RowStyles.Add( new RowStyle() );
 		this.bodyPanel.RowStyles.Add( new RowStyle() );
@@ -111,8 +145,23 @@ partial class MainForm
 		this.bodyPanel.RowStyles.Add( new RowStyle() );
 		this.bodyPanel.RowStyles.Add( new RowStyle() );
 		this.bodyPanel.RowStyles.Add( new RowStyle() );
-		this.bodyPanel.Size = new Size( 451, 454 );
+		this.bodyPanel.RowStyles.Add( new RowStyle() );
+		this.bodyPanel.Size = new Size( 451, 496 );
 		this.bodyPanel.TabIndex = 0;
+		// 
+		// rawLabel
+		// 
+		this.rawLabel.Anchor = AnchorStyles.Left;
+		this.rawLabel.AutoEllipsis = true;
+		this.rawLabel.AutoSize = true;
+		this.bodyPanel.SetColumnSpan( this.rawLabel, 2 );
+		this.rawLabel.ForeColor = Color.FromArgb( 117, 117, 117 );
+		this.rawLabel.Location = new Point( 15, 167 );
+		this.rawLabel.Margin = new Padding( 3, 0, 0, 0 );
+		this.rawLabel.Name = "rawLabel";
+		this.rawLabel.Size = new Size( 41, 15 );
+		this.rawLabel.TabIndex = 7;
+		this.rawLabel.Text = "OCR: -";
 		// 
 		// headerPanel
 		// 
@@ -171,10 +220,10 @@ partial class MainForm
 		this.windowSelect.Anchor =   AnchorStyles.Top  |  AnchorStyles.Left   |  AnchorStyles.Right ;
 		this.windowSelect.DropDownStyle = ComboBoxStyle.DropDownList;
 		this.windowSelect.DropDownWidth = 420;
-		this.windowSelect.Location = new Point( 66, 50 );
+		this.windowSelect.Location = new Point( 52, 50 );
 		this.windowSelect.MaxDropDownItems = 20;
 		this.windowSelect.Name = "windowSelect";
-		this.windowSelect.Size = new Size( 370, 23 );
+		this.windowSelect.Size = new Size( 384, 23 );
 		this.windowSelect.TabIndex = 11;
 		this.windowSelect.DropDown +=  this.WindowSelect_DropDown ;
 		this.windowSelect.SelectedIndexChanged +=  this.WindowSelect_SelectedIndexChanged ;
@@ -191,25 +240,15 @@ partial class MainForm
 		this.preview.TabIndex = 8;
 		this.preview.TabStop = false;
 		// 
-		// nameCaption
-		// 
-		this.nameCaption.Anchor = AnchorStyles.Left;
-		this.nameCaption.AutoSize = true;
-		this.nameCaption.Location = new Point( 15, 176 );
-		this.nameCaption.Name = "nameCaption";
-		this.nameCaption.Size = new Size( 45, 15 );
-		this.nameCaption.TabIndex = 1;
-		this.nameCaption.Text = "マップ名";
-		// 
 		// namePanel
 		// 
-		this.namePanel.AutoSize = true;
+		this.bodyPanel.SetColumnSpan( this.namePanel, 2 );
 		this.namePanel.Controls.Add( this.nameValue );
 		this.namePanel.Controls.Add( this.mapSelect );
-		this.namePanel.Location = new Point( 63, 167 );
+		this.namePanel.Location = new Point( 12, 182 );
 		this.namePanel.Margin = new Padding( 0 );
 		this.namePanel.Name = "namePanel";
-		this.namePanel.Size = new Size( 373, 34 );
+		this.namePanel.Size = new Size( 427, 34 );
 		this.namePanel.TabIndex = 2;
 		this.namePanel.WrapContents = false;
 		// 
@@ -218,7 +257,7 @@ partial class MainForm
 		this.nameValue.Font = new Font( "Yu Gothic UI", 16F, FontStyle.Bold );
 		this.nameValue.Location = new Point( 3, 0 );
 		this.nameValue.Name = "nameValue";
-		this.nameValue.Size = new Size( 244, 34 );
+		this.nameValue.Size = new Size( 294, 34 );
 		this.nameValue.TabIndex = 0;
 		this.nameValue.Text = "—";
 		this.nameValue.TextAlign = ContentAlignment.MiddleLeft;
@@ -228,210 +267,586 @@ partial class MainForm
 		this.mapSelect.Anchor = AnchorStyles.Left;
 		this.mapSelect.DropDownStyle = ComboBoxStyle.DropDownList;
 		this.mapSelect.DropDownWidth = 200;
-		this.mapSelect.Location = new Point( 253, 5 );
-		this.mapSelect.Margin = new Padding( 3, 0, 0, 0 );
+		this.mapSelect.Location = new Point( 303, 5 );
+		this.mapSelect.Margin = new Padding( 3, 0, 3, 0 );
 		this.mapSelect.MaxDropDownItems = 20;
 		this.mapSelect.Name = "mapSelect";
 		this.mapSelect.Size = new Size( 120, 23 );
 		this.mapSelect.TabIndex = 1;
 		this.mapSelect.SelectedIndexChanged +=  this.MapSelect_SelectedIndexChanged ;
 		// 
-		// coordinateCaption
+		// overlayPanel
 		// 
-		this.coordinateCaption.Anchor = AnchorStyles.Left;
-		this.coordinateCaption.AutoSize = true;
-		this.coordinateCaption.Location = new Point( 15, 210 );
-		this.coordinateCaption.Name = "coordinateCaption";
-		this.coordinateCaption.Size = new Size( 31, 15 );
-		this.coordinateCaption.TabIndex = 4;
-		this.coordinateCaption.Text = "座標";
-		// 
-		// coordinateValue
-		// 
-		this.coordinateValue.Font = new Font( "Yu Gothic UI", 16F, FontStyle.Bold );
-		this.coordinateValue.Location = new Point( 66, 201 );
-		this.coordinateValue.Name = "coordinateValue";
-		this.coordinateValue.Size = new Size( 244, 34 );
-		this.coordinateValue.TabIndex = 5;
-		this.coordinateValue.Text = "—";
-		this.coordinateValue.TextAlign = ContentAlignment.MiddleLeft;
-		// 
-		// rawLabel
-		// 
-		this.rawLabel.AutoSize = true;
-		this.bodyPanel.SetColumnSpan( this.rawLabel, 2 );
-		this.rawLabel.ForeColor = Color.FromArgb( 117, 117, 117 );
-		this.rawLabel.Location = new Point( 15, 241 );
-		this.rawLabel.Margin = new Padding( 3, 6, 3, 2 );
-		this.rawLabel.Name = "rawLabel";
-		this.rawLabel.Size = new Size( 41, 15 );
-		this.rawLabel.TabIndex = 7;
-		this.rawLabel.Text = "OCR: -";
+		this.overlayPanel.AutoSize = true;
+		this.overlayPanel.AutoSizeMode = AutoSizeMode.GrowAndShrink;
+		this.overlayPanel.ColumnCount = 2;
+		this.bodyPanel.SetColumnSpan( this.overlayPanel, 2 );
+		this.overlayPanel.ColumnStyles.Add( new ColumnStyle() );
+		this.overlayPanel.ColumnStyles.Add( new ColumnStyle() );
+		this.overlayPanel.Controls.Add( this.layersPanel, 0, 0 );
+		this.overlayPanel.Controls.Add( this.flowLayoutPanel1, 1, 1 );
+		this.overlayPanel.Controls.Add( this.overlayOptionPanel, 1, 0 );
+		this.overlayPanel.Dock = DockStyle.Fill;
+		this.overlayPanel.Location = new Point( 12, 216 );
+		this.overlayPanel.Margin = new Padding( 0 );
+		this.overlayPanel.Name = "overlayPanel";
+		this.overlayPanel.RowCount = 2;
+		this.overlayPanel.RowStyles.Add( new RowStyle() );
+		this.overlayPanel.RowStyles.Add( new RowStyle( SizeType.Percent, 100F ) );
+		this.overlayPanel.Size = new Size( 427, 181 );
+		this.overlayPanel.TabIndex = 12;
 		// 
 		// layersPanel
 		// 
 		this.layersPanel.AutoSize = true;
 		this.layersPanel.AutoSizeMode = AutoSizeMode.GrowAndShrink;
-		this.layersPanel.ColumnCount = 4;
-		this.bodyPanel.SetColumnSpan( this.layersPanel, 2 );
+		this.layersPanel.ColumnCount = 5;
 		this.layersPanel.ColumnStyles.Add( new ColumnStyle() );
 		this.layersPanel.ColumnStyles.Add( new ColumnStyle() );
 		this.layersPanel.ColumnStyles.Add( new ColumnStyle() );
 		this.layersPanel.ColumnStyles.Add( new ColumnStyle() );
-		this.layersPanel.Controls.Add( this.impassableEdgeSwatch, 0, 0 );
-		this.layersPanel.Controls.Add( this.impassableEdgeBox, 1, 0 );
-		this.layersPanel.Controls.Add( this.monsterBlockSwatch, 0, 1 );
-		this.layersPanel.Controls.Add( this.monsterBlockBox, 1, 1 );
-		this.layersPanel.Controls.Add( this.mapMoveSwatch, 0, 2 );
-		this.layersPanel.Controls.Add( this.mapMoveBox, 1, 2 );
-		this.layersPanel.Controls.Add( this.specialSwatch, 0, 3 );
-		this.layersPanel.Controls.Add( this.specialBox, 1, 3 );
-		this.layersPanel.Controls.Add( this.gridSwatch, 2, 0 );
-		this.layersPanel.Controls.Add( this.gridBox, 3, 0 );
-		this.layersPanel.Controls.Add( this.playerSwatch, 2, 1 );
-		this.layersPanel.Controls.Add( this.playerBox, 3, 1 );
-		this.layersPanel.Location = new Point( 12, 258 );
-		this.layersPanel.Margin = new Padding( 0, 0, 0, 2 );
+		this.layersPanel.ColumnStyles.Add( new ColumnStyle() );
+		this.layersPanel.Controls.Add( this.overallOpacityLabel, 0, 0 );
+		this.layersPanel.Controls.Add( this.overallOpacityBox, 3, 0 );
+		this.layersPanel.Controls.Add( this.overallOpacityUnit, 4, 0 );
+		this.layersPanel.Controls.Add( this.impassableEdgeBox, 0, 1 );
+		this.layersPanel.Controls.Add( this.impassableEdgeSwatch, 1, 1 );
+		this.layersPanel.Controls.Add( this.impassableEdgeOpacityCheck, 2, 1 );
+		this.layersPanel.Controls.Add( this.impassableEdgeOpacityBox, 3, 1 );
+		this.layersPanel.Controls.Add( this.impassableEdgeOpacityUnit, 4, 1 );
+		this.layersPanel.Controls.Add( this.monsterBlockBox, 0, 2 );
+		this.layersPanel.Controls.Add( this.monsterBlockSwatch, 1, 2 );
+		this.layersPanel.Controls.Add( this.monsterBlockOpacityCheck, 2, 2 );
+		this.layersPanel.Controls.Add( this.monsterBlockOpacityBox, 3, 2 );
+		this.layersPanel.Controls.Add( this.monsterBlockOpacityUnit, 4, 2 );
+		this.layersPanel.Controls.Add( this.mapMoveBox, 0, 3 );
+		this.layersPanel.Controls.Add( this.mapMoveSwatch, 1, 3 );
+		this.layersPanel.Controls.Add( this.mapMoveOpacityCheck, 2, 3 );
+		this.layersPanel.Controls.Add( this.mapMoveOpacityBox, 3, 3 );
+		this.layersPanel.Controls.Add( this.mapMoveOpacityUnit, 4, 3 );
+		this.layersPanel.Controls.Add( this.specialBox, 0, 4 );
+		this.layersPanel.Controls.Add( this.specialSwatch, 1, 4 );
+		this.layersPanel.Controls.Add( this.specialOpacityCheck, 2, 4 );
+		this.layersPanel.Controls.Add( this.specialOpacityBox, 3, 4 );
+		this.layersPanel.Controls.Add( this.specialOpacityUnit, 4, 4 );
+		this.layersPanel.Controls.Add( this.gridBox, 0, 5 );
+		this.layersPanel.Controls.Add( this.gridSwatch, 1, 5 );
+		this.layersPanel.Controls.Add( this.gridOpacityCheck, 2, 5 );
+		this.layersPanel.Controls.Add( this.gridOpacityBox, 3, 5 );
+		this.layersPanel.Controls.Add( this.gridOpacityUnit, 4, 5 );
+		this.layersPanel.Controls.Add( this.playerBox, 0, 6 );
+		this.layersPanel.Controls.Add( this.playerSwatch, 1, 6 );
+		this.layersPanel.Controls.Add( this.playerOpacityCheck, 2, 6 );
+		this.layersPanel.Controls.Add( this.playerOpacityBox, 3, 6 );
+		this.layersPanel.Controls.Add( this.playerOpacityUnit, 4, 6 );
+		this.layersPanel.Location = new Point( 0, 4 );
+		this.layersPanel.Margin = new Padding( 0, 4, 0, 2 );
 		this.layersPanel.Name = "layersPanel";
-		this.layersPanel.RowCount = 4;
+		this.layersPanel.RowCount = 7;
+		this.overlayPanel.SetRowSpan( this.layersPanel, 2 );
 		this.layersPanel.RowStyles.Add( new RowStyle() );
 		this.layersPanel.RowStyles.Add( new RowStyle() );
 		this.layersPanel.RowStyles.Add( new RowStyle() );
 		this.layersPanel.RowStyles.Add( new RowStyle() );
-		this.layersPanel.Size = new Size( 220, 100 );
+		this.layersPanel.RowStyles.Add( new RowStyle() );
+		this.layersPanel.RowStyles.Add( new RowStyle() );
+		this.layersPanel.RowStyles.Add( new RowStyle() );
+		this.layersPanel.RowStyles.Add( new RowStyle( SizeType.Absolute, 20F ) );
+		this.layersPanel.Size = new Size( 220, 175 );
 		this.layersPanel.TabIndex = 12;
+		// 
+		// overallOpacityLabel
+		// 
+		this.overallOpacityLabel.Anchor = AnchorStyles.Right;
+		this.overallOpacityLabel.AutoSize = true;
+		this.layersPanel.SetColumnSpan( this.overallOpacityLabel, 3 );
+		this.overallOpacityLabel.Location = new Point( 52, 5 );
+		this.overallOpacityLabel.Name = "overallOpacityLabel";
+		this.overallOpacityLabel.Size = new Size( 89, 15 );
+		this.overallOpacityLabel.TabIndex = 0;
+		this.overallOpacityLabel.Text = "全体の不透明度";
+		// 
+		// overallOpacityBox
+		// 
+		this.overallOpacityBox.Anchor = AnchorStyles.Left;
+		this.overallOpacityBox.Increment = new decimal( new int[] { 5, 0, 0, 0 } );
+		this.overallOpacityBox.Location = new Point( 147, 1 );
+		this.overallOpacityBox.Margin = new Padding( 3, 1, 0, 1 );
+		this.overallOpacityBox.Minimum = new decimal( new int[] { 10, 0, 0, 0 } );
+		this.overallOpacityBox.Name = "overallOpacityBox";
+		this.overallOpacityBox.Size = new Size( 50, 23 );
+		this.overallOpacityBox.TabIndex = 0;
+		this.overallOpacityBox.TextAlign = HorizontalAlignment.Right;
+		this.toolTip.SetToolTip( this.overallOpacityBox, "全体の不透明度。100% で不透明。小さくするほどゲーム画面が透けて見えます\n個別にチェックを入れていない色に使います" );
+		this.overallOpacityBox.Value = new decimal( new int[] { 50, 0, 0, 0 } );
+		this.overallOpacityBox.ValueChanged +=  this.OverallOpacityBox_ValueChanged ;
+		// 
+		// overallOpacityUnit
+		// 
+		this.overallOpacityUnit.Anchor = AnchorStyles.Left;
+		this.overallOpacityUnit.AutoSize = true;
+		this.overallOpacityUnit.Location = new Point( 200, 5 );
+		this.overallOpacityUnit.Name = "overallOpacityUnit";
+		this.overallOpacityUnit.Size = new Size( 17, 15 );
+		this.overallOpacityUnit.TabIndex = 1;
+		this.overallOpacityUnit.Text = "%";
+		// 
+		// impassableEdgeBox
+		// 
+		this.impassableEdgeBox.Dock = DockStyle.Fill;
+		this.impassableEdgeBox.Location = new Point( 3, 28 );
+		this.impassableEdgeBox.Margin = new Padding( 3, 3, 0, 3 );
+		this.impassableEdgeBox.Name = "impassableEdgeBox";
+		this.impassableEdgeBox.Size = new Size( 94, 19 );
+		this.impassableEdgeBox.TabIndex = 2;
+		this.impassableEdgeBox.Text = "壁";
+		this.toolTip.SetToolTip( this.impassableEdgeBox, "オーバーレイに表示します" );
+		this.impassableEdgeBox.UseVisualStyleBackColor = true;
+		this.impassableEdgeBox.CheckedChanged +=  this.LayerBox_CheckedChanged ;
 		// 
 		// impassableEdgeSwatch
 		// 
 		this.impassableEdgeSwatch.Anchor = AnchorStyles.Left;
-		this.impassableEdgeSwatch.BorderStyle = BorderStyle.FixedSingle;
-		this.impassableEdgeSwatch.Location = new Point( 3, 5 );
-		this.impassableEdgeSwatch.Margin = new Padding( 3, 3, 0, 3 );
+		this.impassableEdgeSwatch.ContextMenuStrip = this.colorMenu;
+		this.impassableEdgeSwatch.FlatAppearance.BorderColor = Color.FromArgb( 117, 117, 117 );
+		this.impassableEdgeSwatch.FlatStyle = FlatStyle.Flat;
+		this.impassableEdgeSwatch.Location = new Point( 97, 27 );
+		this.impassableEdgeSwatch.Margin = new Padding( 0 );
 		this.impassableEdgeSwatch.Name = "impassableEdgeSwatch";
-		this.impassableEdgeSwatch.Size = new Size( 14, 14 );
-		this.impassableEdgeSwatch.TabIndex = 0;
+		this.impassableEdgeSwatch.Size = new Size( 20, 20 );
+		this.impassableEdgeSwatch.TabIndex = 1;
+		this.toolTip.SetToolTip( this.impassableEdgeSwatch, "クリックで色を変更します" );
+		this.impassableEdgeSwatch.Click +=  this.ColorButton_Click ;
 		// 
-		// impassableEdgeBox
+		// colorMenu
 		// 
-		this.impassableEdgeBox.Anchor = AnchorStyles.Left;
-		this.impassableEdgeBox.AutoSize = true;
-		this.impassableEdgeBox.Location = new Point( 20, 3 );
-		this.impassableEdgeBox.Name = "impassableEdgeBox";
-		this.impassableEdgeBox.Size = new Size( 38, 19 );
-		this.impassableEdgeBox.TabIndex = 1;
-		this.impassableEdgeBox.Text = "壁";
-		this.impassableEdgeBox.UseVisualStyleBackColor = true;
-		this.impassableEdgeBox.CheckedChanged +=  this.LayerBox_CheckedChanged ;
+		this.colorMenu.Items.AddRange( new ToolStripItem[] { this.colorDefaultItem } );
+		this.colorMenu.Name = "colorMenu";
+		this.colorMenu.Size = new Size( 142, 26 );
+		this.colorMenu.Opening +=  this.ColorMenu_Opening ;
+		// 
+		// colorDefaultItem
+		// 
+		this.colorDefaultItem.Name = "colorDefaultItem";
+		this.colorDefaultItem.Size = new Size( 141, 22 );
+		this.colorDefaultItem.Text = "初期値に戻す";
+		this.colorDefaultItem.Click +=  this.ColorDefaultItem_Click ;
+		// 
+		// impassableEdgeOpacityCheck
+		// 
+		this.impassableEdgeOpacityCheck.Anchor = AnchorStyles.Left;
+		this.impassableEdgeOpacityCheck.AutoSize = true;
+		this.impassableEdgeOpacityCheck.Location = new Point( 129, 30 );
+		this.impassableEdgeOpacityCheck.Margin = new Padding( 12, 3, 0, 3 );
+		this.impassableEdgeOpacityCheck.Name = "impassableEdgeOpacityCheck";
+		this.impassableEdgeOpacityCheck.Size = new Size( 15, 14 );
+		this.impassableEdgeOpacityCheck.TabIndex = 3;
+		this.toolTip.SetToolTip( this.impassableEdgeOpacityCheck, "チェックを入れると、この色だけ個別の不透明度にします" );
+		this.impassableEdgeOpacityCheck.UseVisualStyleBackColor = true;
+		this.impassableEdgeOpacityCheck.CheckedChanged +=  this.OwnOpacityCheck_CheckedChanged ;
+		// 
+		// impassableEdgeOpacityBox
+		// 
+		this.impassableEdgeOpacityBox.Anchor = AnchorStyles.Left;
+		this.impassableEdgeOpacityBox.Increment = new decimal( new int[] { 5, 0, 0, 0 } );
+		this.impassableEdgeOpacityBox.Location = new Point( 147, 26 );
+		this.impassableEdgeOpacityBox.Margin = new Padding( 3, 1, 0, 1 );
+		this.impassableEdgeOpacityBox.Minimum = new decimal( new int[] { 10, 0, 0, 0 } );
+		this.impassableEdgeOpacityBox.Name = "impassableEdgeOpacityBox";
+		this.impassableEdgeOpacityBox.Size = new Size( 50, 23 );
+		this.impassableEdgeOpacityBox.TabIndex = 4;
+		this.impassableEdgeOpacityBox.TextAlign = HorizontalAlignment.Right;
+		this.toolTip.SetToolTip( this.impassableEdgeOpacityBox, "この色の不透明度" );
+		this.impassableEdgeOpacityBox.Value = new decimal( new int[] { 50, 0, 0, 0 } );
+		this.impassableEdgeOpacityBox.ValueChanged +=  this.OpacityBox_ValueChanged ;
+		// 
+		// impassableEdgeOpacityUnit
+		// 
+		this.impassableEdgeOpacityUnit.Anchor = AnchorStyles.Left;
+		this.impassableEdgeOpacityUnit.AutoSize = true;
+		this.impassableEdgeOpacityUnit.Location = new Point( 200, 30 );
+		this.impassableEdgeOpacityUnit.Name = "impassableEdgeOpacityUnit";
+		this.impassableEdgeOpacityUnit.Size = new Size( 17, 15 );
+		this.impassableEdgeOpacityUnit.TabIndex = 5;
+		this.impassableEdgeOpacityUnit.Text = "%";
+		// 
+		// monsterBlockBox
+		// 
+		this.monsterBlockBox.Dock = DockStyle.Fill;
+		this.monsterBlockBox.Location = new Point( 3, 53 );
+		this.monsterBlockBox.Margin = new Padding( 3, 3, 0, 3 );
+		this.monsterBlockBox.Name = "monsterBlockBox";
+		this.monsterBlockBox.Size = new Size( 94, 19 );
+		this.monsterBlockBox.TabIndex = 6;
+		this.monsterBlockBox.Text = "モンスター境界";
+		this.toolTip.SetToolTip( this.monsterBlockBox, "オーバーレイに表示します" );
+		this.monsterBlockBox.UseVisualStyleBackColor = true;
+		this.monsterBlockBox.CheckedChanged +=  this.LayerBox_CheckedChanged ;
 		// 
 		// monsterBlockSwatch
 		// 
 		this.monsterBlockSwatch.Anchor = AnchorStyles.Left;
-		this.monsterBlockSwatch.BorderStyle = BorderStyle.FixedSingle;
-		this.monsterBlockSwatch.Location = new Point( 3, 30 );
-		this.monsterBlockSwatch.Margin = new Padding( 3, 3, 0, 3 );
+		this.monsterBlockSwatch.ContextMenuStrip = this.colorMenu;
+		this.monsterBlockSwatch.FlatAppearance.BorderColor = Color.FromArgb( 117, 117, 117 );
+		this.monsterBlockSwatch.FlatStyle = FlatStyle.Flat;
+		this.monsterBlockSwatch.Location = new Point( 97, 52 );
+		this.monsterBlockSwatch.Margin = new Padding( 0 );
 		this.monsterBlockSwatch.Name = "monsterBlockSwatch";
-		this.monsterBlockSwatch.Size = new Size( 14, 14 );
-		this.monsterBlockSwatch.TabIndex = 3;
+		this.monsterBlockSwatch.Size = new Size( 20, 20 );
+		this.monsterBlockSwatch.TabIndex = 5;
+		this.toolTip.SetToolTip( this.monsterBlockSwatch, "クリックで色を変更します" );
+		this.monsterBlockSwatch.Click +=  this.ColorButton_Click ;
 		// 
-		// monsterBlockBox
+		// monsterBlockOpacityCheck
 		// 
-		this.monsterBlockBox.Anchor = AnchorStyles.Left;
-		this.monsterBlockBox.AutoSize = true;
-		this.monsterBlockBox.Location = new Point( 20, 28 );
-		this.monsterBlockBox.Name = "monsterBlockBox";
-		this.monsterBlockBox.Size = new Size( 94, 19 );
-		this.monsterBlockBox.TabIndex = 4;
-		this.monsterBlockBox.Text = "モンスター境界";
-		this.monsterBlockBox.UseVisualStyleBackColor = true;
-		this.monsterBlockBox.CheckedChanged +=  this.LayerBox_CheckedChanged ;
+		this.monsterBlockOpacityCheck.Anchor = AnchorStyles.Left;
+		this.monsterBlockOpacityCheck.AutoSize = true;
+		this.monsterBlockOpacityCheck.Location = new Point( 129, 55 );
+		this.monsterBlockOpacityCheck.Margin = new Padding( 12, 3, 0, 3 );
+		this.monsterBlockOpacityCheck.Name = "monsterBlockOpacityCheck";
+		this.monsterBlockOpacityCheck.Size = new Size( 15, 14 );
+		this.monsterBlockOpacityCheck.TabIndex = 7;
+		this.toolTip.SetToolTip( this.monsterBlockOpacityCheck, "チェックを入れると、この色だけ個別の不透明度にします" );
+		this.monsterBlockOpacityCheck.UseVisualStyleBackColor = true;
+		this.monsterBlockOpacityCheck.CheckedChanged +=  this.OwnOpacityCheck_CheckedChanged ;
+		// 
+		// monsterBlockOpacityBox
+		// 
+		this.monsterBlockOpacityBox.Anchor = AnchorStyles.Left;
+		this.monsterBlockOpacityBox.Increment = new decimal( new int[] { 5, 0, 0, 0 } );
+		this.monsterBlockOpacityBox.Location = new Point( 147, 51 );
+		this.monsterBlockOpacityBox.Margin = new Padding( 3, 1, 0, 1 );
+		this.monsterBlockOpacityBox.Minimum = new decimal( new int[] { 10, 0, 0, 0 } );
+		this.monsterBlockOpacityBox.Name = "monsterBlockOpacityBox";
+		this.monsterBlockOpacityBox.Size = new Size( 50, 23 );
+		this.monsterBlockOpacityBox.TabIndex = 8;
+		this.monsterBlockOpacityBox.TextAlign = HorizontalAlignment.Right;
+		this.toolTip.SetToolTip( this.monsterBlockOpacityBox, "この色の不透明度" );
+		this.monsterBlockOpacityBox.Value = new decimal( new int[] { 50, 0, 0, 0 } );
+		this.monsterBlockOpacityBox.ValueChanged +=  this.OpacityBox_ValueChanged ;
+		// 
+		// monsterBlockOpacityUnit
+		// 
+		this.monsterBlockOpacityUnit.Anchor = AnchorStyles.Left;
+		this.monsterBlockOpacityUnit.AutoSize = true;
+		this.monsterBlockOpacityUnit.Location = new Point( 200, 55 );
+		this.monsterBlockOpacityUnit.Name = "monsterBlockOpacityUnit";
+		this.monsterBlockOpacityUnit.Size = new Size( 17, 15 );
+		this.monsterBlockOpacityUnit.TabIndex = 9;
+		this.monsterBlockOpacityUnit.Text = "%";
+		// 
+		// mapMoveBox
+		// 
+		this.mapMoveBox.Dock = DockStyle.Fill;
+		this.mapMoveBox.Location = new Point( 3, 78 );
+		this.mapMoveBox.Margin = new Padding( 3, 3, 0, 3 );
+		this.mapMoveBox.Name = "mapMoveBox";
+		this.mapMoveBox.Size = new Size( 94, 19 );
+		this.mapMoveBox.TabIndex = 10;
+		this.mapMoveBox.Text = "出入口";
+		this.toolTip.SetToolTip( this.mapMoveBox, "オーバーレイに表示します" );
+		this.mapMoveBox.UseVisualStyleBackColor = true;
+		this.mapMoveBox.CheckedChanged +=  this.LayerBox_CheckedChanged ;
 		// 
 		// mapMoveSwatch
 		// 
 		this.mapMoveSwatch.Anchor = AnchorStyles.Left;
-		this.mapMoveSwatch.BorderStyle = BorderStyle.FixedSingle;
-		this.mapMoveSwatch.Location = new Point( 3, 55 );
-		this.mapMoveSwatch.Margin = new Padding( 3, 3, 0, 3 );
+		this.mapMoveSwatch.ContextMenuStrip = this.colorMenu;
+		this.mapMoveSwatch.FlatAppearance.BorderColor = Color.FromArgb( 117, 117, 117 );
+		this.mapMoveSwatch.FlatStyle = FlatStyle.Flat;
+		this.mapMoveSwatch.Location = new Point( 97, 77 );
+		this.mapMoveSwatch.Margin = new Padding( 0 );
 		this.mapMoveSwatch.Name = "mapMoveSwatch";
-		this.mapMoveSwatch.Size = new Size( 14, 14 );
-		this.mapMoveSwatch.TabIndex = 6;
+		this.mapMoveSwatch.Size = new Size( 20, 20 );
+		this.mapMoveSwatch.TabIndex = 9;
+		this.toolTip.SetToolTip( this.mapMoveSwatch, "クリックで色を変更します" );
+		this.mapMoveSwatch.Click +=  this.ColorButton_Click ;
 		// 
-		// mapMoveBox
+		// mapMoveOpacityCheck
 		// 
-		this.mapMoveBox.Anchor = AnchorStyles.Left;
-		this.mapMoveBox.AutoSize = true;
-		this.mapMoveBox.Location = new Point( 20, 53 );
-		this.mapMoveBox.Name = "mapMoveBox";
-		this.mapMoveBox.Size = new Size( 62, 19 );
-		this.mapMoveBox.TabIndex = 7;
-		this.mapMoveBox.Text = "出入口";
-		this.mapMoveBox.UseVisualStyleBackColor = true;
-		this.mapMoveBox.CheckedChanged +=  this.LayerBox_CheckedChanged ;
+		this.mapMoveOpacityCheck.Anchor = AnchorStyles.Left;
+		this.mapMoveOpacityCheck.AutoSize = true;
+		this.mapMoveOpacityCheck.Location = new Point( 129, 80 );
+		this.mapMoveOpacityCheck.Margin = new Padding( 12, 3, 0, 3 );
+		this.mapMoveOpacityCheck.Name = "mapMoveOpacityCheck";
+		this.mapMoveOpacityCheck.Size = new Size( 15, 14 );
+		this.mapMoveOpacityCheck.TabIndex = 11;
+		this.toolTip.SetToolTip( this.mapMoveOpacityCheck, "チェックを入れると、この色だけ個別の不透明度にします" );
+		this.mapMoveOpacityCheck.UseVisualStyleBackColor = true;
+		this.mapMoveOpacityCheck.CheckedChanged +=  this.OwnOpacityCheck_CheckedChanged ;
+		// 
+		// mapMoveOpacityBox
+		// 
+		this.mapMoveOpacityBox.Anchor = AnchorStyles.Left;
+		this.mapMoveOpacityBox.Increment = new decimal( new int[] { 5, 0, 0, 0 } );
+		this.mapMoveOpacityBox.Location = new Point( 147, 76 );
+		this.mapMoveOpacityBox.Margin = new Padding( 3, 1, 0, 1 );
+		this.mapMoveOpacityBox.Minimum = new decimal( new int[] { 10, 0, 0, 0 } );
+		this.mapMoveOpacityBox.Name = "mapMoveOpacityBox";
+		this.mapMoveOpacityBox.Size = new Size( 50, 23 );
+		this.mapMoveOpacityBox.TabIndex = 12;
+		this.mapMoveOpacityBox.TextAlign = HorizontalAlignment.Right;
+		this.toolTip.SetToolTip( this.mapMoveOpacityBox, "この色の不透明度" );
+		this.mapMoveOpacityBox.Value = new decimal( new int[] { 50, 0, 0, 0 } );
+		this.mapMoveOpacityBox.ValueChanged +=  this.OpacityBox_ValueChanged ;
+		// 
+		// mapMoveOpacityUnit
+		// 
+		this.mapMoveOpacityUnit.Anchor = AnchorStyles.Left;
+		this.mapMoveOpacityUnit.AutoSize = true;
+		this.mapMoveOpacityUnit.Location = new Point( 200, 80 );
+		this.mapMoveOpacityUnit.Name = "mapMoveOpacityUnit";
+		this.mapMoveOpacityUnit.Size = new Size( 17, 15 );
+		this.mapMoveOpacityUnit.TabIndex = 13;
+		this.mapMoveOpacityUnit.Text = "%";
+		// 
+		// specialBox
+		// 
+		this.specialBox.Dock = DockStyle.Fill;
+		this.specialBox.Location = new Point( 3, 103 );
+		this.specialBox.Margin = new Padding( 3, 3, 0, 3 );
+		this.specialBox.Name = "specialBox";
+		this.specialBox.Size = new Size( 94, 19 );
+		this.specialBox.TabIndex = 14;
+		this.specialBox.Text = "その他";
+		this.toolTip.SetToolTip( this.specialBox, "オーバーレイに表示します" );
+		this.specialBox.UseVisualStyleBackColor = true;
+		this.specialBox.CheckedChanged +=  this.LayerBox_CheckedChanged ;
 		// 
 		// specialSwatch
 		// 
 		this.specialSwatch.Anchor = AnchorStyles.Left;
-		this.specialSwatch.BorderStyle = BorderStyle.FixedSingle;
-		this.specialSwatch.Location = new Point( 3, 80 );
-		this.specialSwatch.Margin = new Padding( 3, 3, 0, 3 );
+		this.specialSwatch.ContextMenuStrip = this.colorMenu;
+		this.specialSwatch.FlatAppearance.BorderColor = Color.FromArgb( 117, 117, 117 );
+		this.specialSwatch.FlatStyle = FlatStyle.Flat;
+		this.specialSwatch.Location = new Point( 97, 102 );
+		this.specialSwatch.Margin = new Padding( 0 );
 		this.specialSwatch.Name = "specialSwatch";
-		this.specialSwatch.Size = new Size( 14, 14 );
-		this.specialSwatch.TabIndex = 9;
+		this.specialSwatch.Size = new Size( 20, 20 );
+		this.specialSwatch.TabIndex = 13;
+		this.toolTip.SetToolTip( this.specialSwatch, "クリックで色を変更します" );
+		this.specialSwatch.Click +=  this.ColorButton_Click ;
 		// 
-		// specialBox
+		// specialOpacityCheck
 		// 
-		this.specialBox.Anchor = AnchorStyles.Left;
-		this.specialBox.AutoSize = true;
-		this.specialBox.Location = new Point( 20, 78 );
-		this.specialBox.Name = "specialBox";
-		this.specialBox.Size = new Size( 57, 19 );
-		this.specialBox.TabIndex = 10;
-		this.specialBox.Text = "その他";
-		this.specialBox.UseVisualStyleBackColor = true;
-		this.specialBox.CheckedChanged +=  this.LayerBox_CheckedChanged ;
+		this.specialOpacityCheck.Anchor = AnchorStyles.Left;
+		this.specialOpacityCheck.AutoSize = true;
+		this.specialOpacityCheck.Location = new Point( 129, 105 );
+		this.specialOpacityCheck.Margin = new Padding( 12, 3, 0, 3 );
+		this.specialOpacityCheck.Name = "specialOpacityCheck";
+		this.specialOpacityCheck.Size = new Size( 15, 14 );
+		this.specialOpacityCheck.TabIndex = 15;
+		this.toolTip.SetToolTip( this.specialOpacityCheck, "チェックを入れると、この色だけ個別の不透明度にします" );
+		this.specialOpacityCheck.UseVisualStyleBackColor = true;
+		this.specialOpacityCheck.CheckedChanged +=  this.OwnOpacityCheck_CheckedChanged ;
+		// 
+		// specialOpacityBox
+		// 
+		this.specialOpacityBox.Anchor = AnchorStyles.Left;
+		this.specialOpacityBox.Increment = new decimal( new int[] { 5, 0, 0, 0 } );
+		this.specialOpacityBox.Location = new Point( 147, 101 );
+		this.specialOpacityBox.Margin = new Padding( 3, 1, 0, 1 );
+		this.specialOpacityBox.Minimum = new decimal( new int[] { 10, 0, 0, 0 } );
+		this.specialOpacityBox.Name = "specialOpacityBox";
+		this.specialOpacityBox.Size = new Size( 50, 23 );
+		this.specialOpacityBox.TabIndex = 16;
+		this.specialOpacityBox.TextAlign = HorizontalAlignment.Right;
+		this.toolTip.SetToolTip( this.specialOpacityBox, "この色の不透明度" );
+		this.specialOpacityBox.Value = new decimal( new int[] { 50, 0, 0, 0 } );
+		this.specialOpacityBox.ValueChanged +=  this.OpacityBox_ValueChanged ;
+		// 
+		// specialOpacityUnit
+		// 
+		this.specialOpacityUnit.Anchor = AnchorStyles.Left;
+		this.specialOpacityUnit.AutoSize = true;
+		this.specialOpacityUnit.Location = new Point( 200, 105 );
+		this.specialOpacityUnit.Name = "specialOpacityUnit";
+		this.specialOpacityUnit.Size = new Size( 17, 15 );
+		this.specialOpacityUnit.TabIndex = 17;
+		this.specialOpacityUnit.Text = "%";
+		// 
+		// gridBox
+		// 
+		this.gridBox.Dock = DockStyle.Fill;
+		this.gridBox.Location = new Point( 3, 128 );
+		this.gridBox.Margin = new Padding( 3, 3, 0, 3 );
+		this.gridBox.Name = "gridBox";
+		this.gridBox.Size = new Size( 94, 19 );
+		this.gridBox.TabIndex = 18;
+		this.gridBox.Text = "グリッド";
+		this.toolTip.SetToolTip( this.gridBox, "オーバーレイに表示します" );
+		this.gridBox.UseVisualStyleBackColor = true;
+		this.gridBox.CheckedChanged +=  this.GridBox_CheckedChanged ;
 		// 
 		// gridSwatch
 		// 
 		this.gridSwatch.Anchor = AnchorStyles.Left;
-		this.gridSwatch.BorderStyle = BorderStyle.FixedSingle;
-		this.gridSwatch.Location = new Point( 129, 5 );
-		this.gridSwatch.Margin = new Padding( 12, 3, 0, 3 );
+		this.gridSwatch.ContextMenuStrip = this.colorMenu;
+		this.gridSwatch.FlatAppearance.BorderColor = Color.FromArgb( 117, 117, 117 );
+		this.gridSwatch.FlatStyle = FlatStyle.Flat;
+		this.gridSwatch.Location = new Point( 97, 127 );
+		this.gridSwatch.Margin = new Padding( 0 );
 		this.gridSwatch.Name = "gridSwatch";
-		this.gridSwatch.Size = new Size( 14, 14 );
-		this.gridSwatch.TabIndex = 11;
+		this.gridSwatch.Size = new Size( 20, 20 );
+		this.gridSwatch.TabIndex = 17;
+		this.toolTip.SetToolTip( this.gridSwatch, "クリックで色を変更します" );
+		this.gridSwatch.Click +=  this.GridColorButton_Click ;
 		// 
-		// gridBox
+		// gridOpacityCheck
 		// 
-		this.gridBox.Anchor = AnchorStyles.Left;
-		this.gridBox.AutoSize = true;
-		this.gridBox.Location = new Point( 146, 3 );
-		this.gridBox.Name = "gridBox";
-		this.gridBox.Size = new Size( 59, 19 );
-		this.gridBox.TabIndex = 12;
-		this.gridBox.Text = "グリッド";
-		this.gridBox.UseVisualStyleBackColor = true;
-		this.gridBox.CheckedChanged +=  this.GridBox_CheckedChanged ;
+		this.gridOpacityCheck.Anchor = AnchorStyles.Left;
+		this.gridOpacityCheck.AutoSize = true;
+		this.gridOpacityCheck.Location = new Point( 129, 130 );
+		this.gridOpacityCheck.Margin = new Padding( 12, 3, 0, 3 );
+		this.gridOpacityCheck.Name = "gridOpacityCheck";
+		this.gridOpacityCheck.Size = new Size( 15, 14 );
+		this.gridOpacityCheck.TabIndex = 19;
+		this.toolTip.SetToolTip( this.gridOpacityCheck, "チェックを入れると、この色だけ個別の不透明度にします" );
+		this.gridOpacityCheck.UseVisualStyleBackColor = true;
+		this.gridOpacityCheck.CheckedChanged +=  this.OwnOpacityCheck_CheckedChanged ;
+		// 
+		// gridOpacityBox
+		// 
+		this.gridOpacityBox.Anchor = AnchorStyles.Left;
+		this.gridOpacityBox.Increment = new decimal( new int[] { 5, 0, 0, 0 } );
+		this.gridOpacityBox.Location = new Point( 147, 126 );
+		this.gridOpacityBox.Margin = new Padding( 3, 1, 0, 1 );
+		this.gridOpacityBox.Minimum = new decimal( new int[] { 10, 0, 0, 0 } );
+		this.gridOpacityBox.Name = "gridOpacityBox";
+		this.gridOpacityBox.Size = new Size( 50, 23 );
+		this.gridOpacityBox.TabIndex = 20;
+		this.gridOpacityBox.TextAlign = HorizontalAlignment.Right;
+		this.toolTip.SetToolTip( this.gridOpacityBox, "この色の不透明度" );
+		this.gridOpacityBox.Value = new decimal( new int[] { 50, 0, 0, 0 } );
+		this.gridOpacityBox.ValueChanged +=  this.OpacityBox_ValueChanged ;
+		// 
+		// gridOpacityUnit
+		// 
+		this.gridOpacityUnit.Anchor = AnchorStyles.Left;
+		this.gridOpacityUnit.AutoSize = true;
+		this.gridOpacityUnit.Location = new Point( 200, 130 );
+		this.gridOpacityUnit.Name = "gridOpacityUnit";
+		this.gridOpacityUnit.Size = new Size( 17, 15 );
+		this.gridOpacityUnit.TabIndex = 21;
+		this.gridOpacityUnit.Text = "%";
+		// 
+		// playerBox
+		// 
+		this.playerBox.Dock = DockStyle.Fill;
+		this.playerBox.Location = new Point( 3, 153 );
+		this.playerBox.Margin = new Padding( 3, 3, 0, 3 );
+		this.playerBox.Name = "playerBox";
+		this.playerBox.Size = new Size( 94, 19 );
+		this.playerBox.TabIndex = 22;
+		this.playerBox.Text = "プレイヤー";
+		this.toolTip.SetToolTip( this.playerBox, "オーバーレイに表示します" );
+		this.playerBox.UseVisualStyleBackColor = true;
+		this.playerBox.CheckedChanged +=  this.PlayerBox_CheckedChanged ;
 		// 
 		// playerSwatch
 		// 
 		this.playerSwatch.Anchor = AnchorStyles.Left;
-		this.playerSwatch.BorderStyle = BorderStyle.FixedSingle;
-		this.playerSwatch.Location = new Point( 129, 30 );
-		this.playerSwatch.Margin = new Padding( 12, 3, 0, 3 );
+		this.playerSwatch.ContextMenuStrip = this.colorMenu;
+		this.playerSwatch.FlatAppearance.BorderColor = Color.FromArgb( 117, 117, 117 );
+		this.playerSwatch.FlatStyle = FlatStyle.Flat;
+		this.playerSwatch.Location = new Point( 97, 152 );
+		this.playerSwatch.Margin = new Padding( 0 );
 		this.playerSwatch.Name = "playerSwatch";
-		this.playerSwatch.Size = new Size( 14, 14 );
-		this.playerSwatch.TabIndex = 13;
+		this.playerSwatch.Size = new Size( 20, 20 );
+		this.playerSwatch.TabIndex = 21;
+		this.toolTip.SetToolTip( this.playerSwatch, "クリックで色を変更します" );
+		this.playerSwatch.Click +=  this.PlayerColorButton_Click ;
 		// 
-		// playerBox
+		// playerOpacityCheck
 		// 
-		this.playerBox.Anchor = AnchorStyles.Left;
-		this.playerBox.AutoSize = true;
-		this.playerBox.Location = new Point( 146, 28 );
-		this.playerBox.Name = "playerBox";
-		this.playerBox.Size = new Size( 71, 19 );
-		this.playerBox.TabIndex = 14;
-		this.playerBox.Text = "プレイヤー";
-		this.playerBox.UseVisualStyleBackColor = true;
-		this.playerBox.CheckedChanged +=  this.PlayerBox_CheckedChanged ;
+		this.playerOpacityCheck.Anchor = AnchorStyles.Left;
+		this.playerOpacityCheck.AutoSize = true;
+		this.playerOpacityCheck.Location = new Point( 129, 155 );
+		this.playerOpacityCheck.Margin = new Padding( 12, 3, 0, 3 );
+		this.playerOpacityCheck.Name = "playerOpacityCheck";
+		this.playerOpacityCheck.Size = new Size( 15, 14 );
+		this.playerOpacityCheck.TabIndex = 23;
+		this.toolTip.SetToolTip( this.playerOpacityCheck, "チェックを入れると、この色だけ個別の不透明度にします" );
+		this.playerOpacityCheck.UseVisualStyleBackColor = true;
+		this.playerOpacityCheck.CheckedChanged +=  this.OwnOpacityCheck_CheckedChanged ;
+		// 
+		// playerOpacityBox
+		// 
+		this.playerOpacityBox.Anchor = AnchorStyles.Left;
+		this.playerOpacityBox.Increment = new decimal( new int[] { 5, 0, 0, 0 } );
+		this.playerOpacityBox.Location = new Point( 147, 151 );
+		this.playerOpacityBox.Margin = new Padding( 3, 1, 0, 1 );
+		this.playerOpacityBox.Minimum = new decimal( new int[] { 10, 0, 0, 0 } );
+		this.playerOpacityBox.Name = "playerOpacityBox";
+		this.playerOpacityBox.Size = new Size( 50, 23 );
+		this.playerOpacityBox.TabIndex = 24;
+		this.playerOpacityBox.TextAlign = HorizontalAlignment.Right;
+		this.toolTip.SetToolTip( this.playerOpacityBox, "この色の不透明度" );
+		this.playerOpacityBox.Value = new decimal( new int[] { 50, 0, 0, 0 } );
+		this.playerOpacityBox.ValueChanged +=  this.OpacityBox_ValueChanged ;
+		// 
+		// playerOpacityUnit
+		// 
+		this.playerOpacityUnit.Anchor = AnchorStyles.Left;
+		this.playerOpacityUnit.AutoSize = true;
+		this.playerOpacityUnit.Location = new Point( 200, 155 );
+		this.playerOpacityUnit.Name = "playerOpacityUnit";
+		this.playerOpacityUnit.Size = new Size( 17, 15 );
+		this.playerOpacityUnit.TabIndex = 25;
+		this.playerOpacityUnit.Text = "%";
+		// 
+		// flowLayoutPanel1
+		// 
+		this.flowLayoutPanel1.Anchor =  AnchorStyles.Bottom  |  AnchorStyles.Left ;
+		this.flowLayoutPanel1.AutoSize = true;
+		this.flowLayoutPanel1.Controls.Add( this.customTilesButton );
+		this.flowLayoutPanel1.Location = new Point( 235, 151 );
+		this.flowLayoutPanel1.Margin = new Padding( 15, 3, 3, 0 );
+		this.flowLayoutPanel1.Name = "flowLayoutPanel1";
+		this.flowLayoutPanel1.Size = new Size( 106, 30 );
+		this.flowLayoutPanel1.TabIndex = 2;
+		// 
+		// customTilesButton
+		// 
+		this.customTilesButton.Anchor =  AnchorStyles.Bottom  |  AnchorStyles.Left ;
+		this.customTilesButton.AutoSize = true;
+		this.customTilesButton.Location = new Point( 3, 3 );
+		this.customTilesButton.Margin = new Padding( 3, 3, 3, 2 );
+		this.customTilesButton.Name = "customTilesButton";
+		this.customTilesButton.Size = new Size( 100, 25 );
+		this.customTilesButton.TabIndex = 2;
+		this.customTilesButton.Text = "カスタムマス...";
+		this.toolTip.SetToolTip( this.customTilesButton, "キャラクターの周りに自分でマスを描きます" );
+		this.customTilesButton.UseVisualStyleBackColor = true;
+		this.customTilesButton.Visible = false;
+		this.customTilesButton.Click +=  this.CustomTilesButton_Click ;
+		// 
+		// overlayOptionPanel
+		// 
+		this.overlayOptionPanel.Anchor =   AnchorStyles.Top  |  AnchorStyles.Bottom   |  AnchorStyles.Left ;
+		this.overlayOptionPanel.AutoSize = true;
+		this.overlayOptionPanel.AutoSizeMode = AutoSizeMode.GrowAndShrink;
+		this.overlayOptionPanel.Controls.Add( this.antiAliasCheck );
+		this.overlayOptionPanel.FlowDirection = FlowDirection.TopDown;
+		this.overlayOptionPanel.Location = new Point( 232, 4 );
+		this.overlayOptionPanel.Margin = new Padding( 12, 4, 0, 2 );
+		this.overlayOptionPanel.Name = "overlayOptionPanel";
+		this.overlayOptionPanel.Size = new Size( 103, 25 );
+		this.overlayOptionPanel.TabIndex = 13;
+		this.overlayOptionPanel.WrapContents = false;
+		// 
+		// antiAliasCheck
+		// 
+		this.antiAliasCheck.Anchor = AnchorStyles.Left;
+		this.antiAliasCheck.AutoSize = true;
+		this.antiAliasCheck.Location = new Point( 3, 3 );
+		this.antiAliasCheck.Name = "antiAliasCheck";
+		this.antiAliasCheck.Size = new Size( 97, 19 );
+		this.antiAliasCheck.TabIndex = 0;
+		this.antiAliasCheck.Text = "アンチエイリアス";
+		this.toolTip.SetToolTip( this.antiAliasCheck, "線の縁をなめらかにします" );
+		this.antiAliasCheck.UseVisualStyleBackColor = true;
+		this.antiAliasCheck.CheckedChanged +=  this.AntiAliasCheck_CheckedChanged ;
 		// 
 		// controlsPanel
 		// 
@@ -445,7 +860,7 @@ partial class MainForm
 		this.controlsPanel.Controls.Add( this.toggleButton, 0, 0 );
 		this.controlsPanel.Controls.Add( this.updateStatusLabel, 1, 0 );
 		this.controlsPanel.Controls.Add( this.closeButton, 2, 0 );
-		this.controlsPanel.Location = new Point( 12, 362 );
+		this.controlsPanel.Location = new Point( 12, 399 );
 		this.controlsPanel.Margin = new Padding( 0, 2, 0, 2 );
 		this.controlsPanel.Name = "controlsPanel";
 		this.controlsPanel.RowCount = 1;
@@ -493,7 +908,7 @@ partial class MainForm
 		this.bodyPanel.SetColumnSpan( this.debugPanel, 2 );
 		this.debugPanel.Controls.Add( this.imageButton );
 		this.debugPanel.Controls.Add( this.liveButton );
-		this.debugPanel.Location = new Point( 12, 402 );
+		this.debugPanel.Location = new Point( 12, 439 );
 		this.debugPanel.Margin = new Padding( 0, 2, 0, 2 );
 		this.debugPanel.Name = "debugPanel";
 		this.debugPanel.Size = new Size( 216, 31 );
@@ -567,7 +982,7 @@ partial class MainForm
 		this.AutoScaleMode = AutoScaleMode.Dpi;
 		this.AutoSize = true;
 		this.AutoSizeMode = AutoSizeMode.GrowAndShrink;
-		this.ClientSize = new Size( 451, 454 );
+		this.ClientSize = new Size( 451, 496 );
 		this.Controls.Add( this.bodyPanel );
 		this.Font = new Font( "Yu Gothic UI", 9F );
 		this.FormBorderStyle = FormBorderStyle.FixedSingle;
@@ -580,8 +995,22 @@ partial class MainForm
 		this.headerPanel.PerformLayout();
 		( (System.ComponentModel.ISupportInitialize)this.preview ).EndInit();
 		this.namePanel.ResumeLayout( false );
+		this.overlayPanel.ResumeLayout( false );
+		this.overlayPanel.PerformLayout();
 		this.layersPanel.ResumeLayout( false );
 		this.layersPanel.PerformLayout();
+		( (System.ComponentModel.ISupportInitialize)this.overallOpacityBox ).EndInit();
+		this.colorMenu.ResumeLayout( false );
+		( (System.ComponentModel.ISupportInitialize)this.impassableEdgeOpacityBox ).EndInit();
+		( (System.ComponentModel.ISupportInitialize)this.monsterBlockOpacityBox ).EndInit();
+		( (System.ComponentModel.ISupportInitialize)this.mapMoveOpacityBox ).EndInit();
+		( (System.ComponentModel.ISupportInitialize)this.specialOpacityBox ).EndInit();
+		( (System.ComponentModel.ISupportInitialize)this.gridOpacityBox ).EndInit();
+		( (System.ComponentModel.ISupportInitialize)this.playerOpacityBox ).EndInit();
+		this.flowLayoutPanel1.ResumeLayout( false );
+		this.flowLayoutPanel1.PerformLayout();
+		this.overlayOptionPanel.ResumeLayout( false );
+		this.overlayOptionPanel.PerformLayout();
 		this.controlsPanel.ResumeLayout( false );
 		this.controlsPanel.PerformLayout();
 		this.debugPanel.ResumeLayout( false );
@@ -594,28 +1023,51 @@ partial class MainForm
 	#endregion
 
 	private TableLayoutPanel bodyPanel;
+    private Label overallOpacityLabel;
+    private NumericUpDown overallOpacityBox;
+    private Label overallOpacityUnit;
+    private CheckBox impassableEdgeOpacityCheck;
+    private NumericUpDown impassableEdgeOpacityBox;
+    private Label impassableEdgeOpacityUnit;
+    private CheckBox monsterBlockOpacityCheck;
+    private NumericUpDown monsterBlockOpacityBox;
+    private Label monsterBlockOpacityUnit;
+    private CheckBox mapMoveOpacityCheck;
+    private NumericUpDown mapMoveOpacityBox;
+    private Label mapMoveOpacityUnit;
+    private CheckBox specialOpacityCheck;
+    private NumericUpDown specialOpacityBox;
+    private Label specialOpacityUnit;
+    private CheckBox gridOpacityCheck;
+    private NumericUpDown gridOpacityBox;
+    private Label gridOpacityUnit;
+    private CheckBox playerOpacityCheck;
+    private NumericUpDown playerOpacityBox;
+    private Label playerOpacityUnit;
+    private FlowLayoutPanel overlayOptionPanel;
+    private CheckBox antiAliasCheck;
+    private Button customTilesButton;
+    private ToolTip toolTip;
     private TableLayoutPanel headerPanel;
     private Label statusLabel;
     private Button settingsButton;
     private Label targetCaption;
     private ComboBox windowSelect;
-    private Label nameCaption;
     private Label nameValue;
-    private Label coordinateCaption;
-    private Label coordinateValue;
     private Label rawLabel;
+    private TableLayoutPanel overlayPanel;
     private TableLayoutPanel layersPanel;
-    private Panel monsterBlockSwatch;
+    private Button monsterBlockSwatch;
     private CheckBox monsterBlockBox;
-    private Panel specialSwatch;
+    private Button specialSwatch;
     private CheckBox specialBox;
-    private Panel impassableEdgeSwatch;
+    private Button impassableEdgeSwatch;
     private CheckBox impassableEdgeBox;
-    private Panel mapMoveSwatch;
+    private Button mapMoveSwatch;
     private CheckBox mapMoveBox;
-    private Panel gridSwatch;
+    private Button gridSwatch;
     private CheckBox gridBox;
-    private Panel playerSwatch;
+    private Button playerSwatch;
     private CheckBox playerBox;
     private PictureBox preview;
     private TableLayoutPanel controlsPanel;
@@ -623,6 +1075,8 @@ partial class MainForm
     private Button closeButton;
     private NotifyIcon trayIcon;
     private ContextMenuStrip trayMenu;
+    private ContextMenuStrip colorMenu;
+    private ToolStripMenuItem colorDefaultItem;
     private ToolStripMenuItem trayShowItem;
     private ToolStripSeparator trayMenuSeparator;
     private ToolStripMenuItem trayExitItem;
@@ -633,4 +1087,5 @@ partial class MainForm
     private Button imageButton;
     private Button liveButton;
     private System.Windows.Forms.Timer timer;
+	private FlowLayoutPanel flowLayoutPanel1;
 }

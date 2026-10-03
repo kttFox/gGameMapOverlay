@@ -85,16 +85,19 @@ internal sealed partial class MainForm : Form, ISettingsHost, IInfoSource {
 	private string? stepBaselineText;
 	private double stepBaselineAt;
 	private GameCoordinate? shownCoordinates;
-	// 種類ごとの、色の見本 (色は設定画面で変える) と表示を切り替えるチェックボックス (デザイナーで配置)。
-	private readonly Dictionary<OverlayLayer, (Panel Swatch, CheckBox Box)> layerControls;
+	// 種類ごとの、色のボタン (クリックで色を変える) と表示を切り替えるチェックボックス (デザイナーで配置)。
+	private readonly Dictionary<OverlayLayer, (Button Swatch, CheckBox Box)> layerControls;
+	// 不透明度 (色の一覧の右、デザイナーで配置)。一番上の行が全体の不透明度。各色はチェックを入れたときだけ個別の不透明度を使い、
+	// 外しているときは全体の不透明度を (変えられない状態で) 表示する。キーは AppConfig.GetOverlayOpacity のキー。
+	private readonly List<(string Key, CheckBox Own, NumericUpDown Box)> opacityRows = [];
 	private bool loadingLayers;
 	private bool loadingMaps;
 	// オーバーレイに渡す、自分で描いたマス (相対位置) と色。設定を変えたときだけ作り直す
 	// (同じ中身でも作り直すと OverlayScene が別物とみなされるので、読み取りごとには作らない)。
 	private IReadOnlyList<CustomTiles> customTiles = [];
 	// カスタムのグループごとの、色の見本と表示を切り替えるチェックボックス (グリッド・プレイヤーの下に並べる。グループの数が変わったら作り直す)。
-	private readonly List<(Panel Swatch, CheckBox Box)> customControls = [];
-	private const int CustomFirstRow = 2;
+	private readonly List<(CheckBox Box, Panel Swatch)> customControls = [];
+	private const int CustomFirstRow = 7;
 
 	// 前面のウィンドウが変わったら、次の読み取りを待たずにオーバーレイを隠す・出し直す。
 	// デリゲートはフックを解除するまで GC されないようフィールドで持つ。
@@ -102,6 +105,9 @@ internal sealed partial class MainForm : Form, ISettingsHost, IInfoSource {
 	private nint foregroundHook;
 
 	private bool ImageMode => imageFrame is not null;
+
+	// 隠し機能: タイトルバーのアイコンの右クリックメニューで、カスタムのマスの編集ボタンを出す (config.ShowCustomTilesButton)。
+	private const int CustomTilesMenuId = 0x100;
 
 	/// <param name="debug">画像モード (スクリーンショットから読み取る) のボタンを表示する。</param>
 	public MainForm( AppConfig config, string configPath, string? startupImagePath = null, bool debug = false ) {
@@ -122,6 +128,14 @@ internal sealed partial class MainForm : Form, ISettingsHost, IInfoSource {
 			[OverlayLayer.ImpassableEdge] = (impassableEdgeSwatch, impassableEdgeBox),
 			[OverlayLayer.MapMove] = (mapMoveSwatch, mapMoveBox),
 		};
+		opacityRows.AddRange( [
+			(OverlayLayer.ImpassableEdge.Key, impassableEdgeOpacityCheck, impassableEdgeOpacityBox),
+			(OverlayLayer.MonsterBlock.Key, monsterBlockOpacityCheck, monsterBlockOpacityBox),
+			(OverlayLayer.MapMove.Key, mapMoveOpacityCheck, mapMoveOpacityBox),
+			(OverlayLayer.Special.Key, specialOpacityCheck, specialOpacityBox),
+			(AppConfig.GridColorKey, gridOpacityCheck, gridOpacityBox),
+			(AppConfig.PlayerColorKey, playerOpacityCheck, playerOpacityBox),
+		] );
 		LoadLayerSettings();
 		LoadMapChoices();
 		LoadWindowChoices();
@@ -241,6 +255,97 @@ internal sealed partial class MainForm : Form, ISettingsHost, IInfoSource {
 		}
 	}
 
+	private void ColorButton_Click( object? sender, EventArgs e ) {
+		foreach( var (layer, controls) in layerControls ) {
+			if( controls.Swatch == sender && ChooseColor( config.GetOverlayColor( layer ) ) is { } color ) {
+				config.SetOverlayColor( layer, color );
+				OverlaySettingsChanged();
+			}
+		}
+	}
+
+	private void GridColorButton_Click( object? sender, EventArgs e ) {
+		if( ChooseColor( config.GetGridColor() ) is { } color ) {
+			config.SetGridColor( color );
+			OverlaySettingsChanged();
+		}
+	}
+
+	private void PlayerColorButton_Click( object? sender, EventArgs e ) {
+		if( ChooseColor( config.GetPlayerColor() ) is { } color ) {
+			config.SetPlayerColor( color );
+			OverlaySettingsChanged();
+		}
+	}
+
+	/// <summary>色を選ばせる。やめたら null。</summary>
+	private Color? ChooseColor( Color current ) {
+		using var dialog = new ColorDialog { Color = Color.FromArgb( 255, current ), FullOpen = true };
+		return dialog.ShowDialog( this ) == DialogResult.OK ? dialog.Color : null;
+	}
+
+	private void OverallOpacityBox_ValueChanged( object? sender, EventArgs e ) {
+		if( !loadingLayers ) {
+			config.OverlayOpacity = (int)overallOpacityBox.Value;
+			OverlaySettingsChanged(); // 個別でない色の表示も全体に合わせる
+		}
+	}
+
+	private void OwnOpacityCheck_CheckedChanged( object? sender, EventArgs e ) {
+		if( loadingLayers ) {
+			return;
+		}
+		foreach( var (key, own, box) in opacityRows.Where( entry => entry.Own == sender ) ) {
+			if( own.Checked ) {
+				config.SetOwnOpacity( key, (int)box.Value ); // 今の値 (全体の値) から始める
+			} else {
+				config.ClearOwnOpacity( key );
+			}
+		}
+		OverlaySettingsChanged();
+	}
+
+	private void OpacityBox_ValueChanged( object? sender, EventArgs e ) {
+		if( loadingLayers ) {
+			return;
+		}
+		foreach( var (key, _, box) in opacityRows.Where( entry => entry.Box == sender ) ) {
+			config.SetOwnOpacity( key, (int)box.Value );
+		}
+		OverlaySettingsChanged();
+	}
+
+	private void AntiAliasCheck_CheckedChanged( object? sender, EventArgs e ) {
+		if( !loadingLayers ) {
+			config.OverlayAntiAlias = antiAliasCheck.Checked;
+			OverlaySettingsChanged();
+		}
+	}
+
+	// 色のボタンの右クリックメニュー。
+	private void ColorMenu_Opening( object? sender, System.ComponentModel.CancelEventArgs e ) {
+		colorDefaultItem.Enabled = ColorKeyOf( colorMenu.SourceControl ) is { } key && config.OverlayColors.ContainsKey( key );
+	}
+
+	private void ColorDefaultItem_Click( object? sender, EventArgs e ) {
+		if( ColorKeyOf( colorMenu.SourceControl ) is { } key && config.OverlayColors.Remove( key ) ) {
+			OverlaySettingsChanged();
+		}
+	}
+
+	/// <summary>色のボタンに対応する、AppConfig.OverlayColors のキー。</summary>
+	private string? ColorKeyOf( Control? swatch ) {
+		if( swatch == gridSwatch ) {
+			return AppConfig.GridColorKey;
+		}
+		if( swatch == playerSwatch ) {
+			return AppConfig.PlayerColorKey;
+		}
+		return layerControls.FirstOrDefault( entry => entry.Value.Swatch == swatch ).Key?.Key;
+	}
+
+	private void CustomTilesButton_Click( object? sender, EventArgs e ) => ShowCustomTiles();
+
 	private void SetStatus( string text, Color color ) {
 		statusLabel.Text = text;
 		statusLabel.ForeColor = color;
@@ -263,10 +368,27 @@ internal sealed partial class MainForm : Form, ISettingsHost, IInfoSource {
 
 	// ---- OCR の準備 --------------------------------------------------------
 
+	protected override void OnHandleCreated( EventArgs e ) {
+		base.OnHandleCreated( e );
+		SystemMenu.InsertFirst( this, CustomTilesMenuId, "カスタムのマスのボタンを表示" );
+		SystemMenu.SetChecked( this, CustomTilesMenuId, config.ShowCustomTilesButton );
+	}
+
+	protected override void WndProc( ref Message m ) {
+		if( SystemMenu.IsCommand( ref m, CustomTilesMenuId ) ) {
+			config.ShowCustomTilesButton = !config.ShowCustomTilesButton;
+			SystemMenu.SetChecked( this, CustomTilesMenuId, config.ShowCustomTilesButton );
+			customTilesButton.Visible = config.ShowCustomTilesButton;
+			Save();
+			return;
+		}
+		base.WndProc( ref m );
+	}
+
 	protected override async void OnShown( EventArgs e ) {
 		base.OnShown( e );
 		foregroundHook = GameWindow.HookForegroundChanged( foregroundChanged ); // 失敗してもタイマーの判定で動く
-		// 設定画面と情報画面は、前に終了したときに開いていたものだけ開く。
+																				// 設定画面と情報画面は、前に終了したときに開いていたものだけ開く。
 		if( config.SettingsWindowOpen ) {
 			OpenSettings();
 		}
@@ -301,6 +423,10 @@ internal sealed partial class MainForm : Form, ISettingsHost, IInfoSource {
 	/// </summary>
 	/// <param name="quiet">起動時の確認。更新がないときや確認できないときはステータスに出すだけにする。</param>
 	private async Task CheckUpdatesAsync( bool quiet ) {
+		if( Program.IsDebug ) {
+			return;
+		}
+
 		if( updating ) {
 			return;
 		}
@@ -484,7 +610,6 @@ internal sealed partial class MainForm : Form, ISettingsHost, IInfoSource {
 		mapSelect.Enabled = !NoOcr;
 		if( NoOcr ) {
 			nameValue.Text = "—";
-			coordinateValue.Text = "—";
 		}
 	}
 
@@ -584,7 +709,7 @@ internal sealed partial class MainForm : Form, ISettingsHost, IInfoSource {
 
 	// 設定で覚えているウィンドウが今は見つからないときの選択肢。
 	private sealed record MissingWindowChoice( string Title, string ProcessName ) {
-		public override string ToString() => $"{Title} ({ProcessName})";
+		public override string ToString() => string.IsNullOrEmpty( ProcessName ) ? "" : $"{Title} ({ProcessName})";
 	}
 
 	private bool loadingWindows;
@@ -625,7 +750,6 @@ internal sealed partial class MainForm : Form, ISettingsHost, IInfoSource {
 		AddEventLog( $"キャプチャ対象: {candidate}" );
 		lastLiveReading = null;
 		nameValue.Text = reader.ManualMapName ?? "—";
-		coordinateValue.Text = "—";
 		HideOverlay();
 		UpdateMoveKeyWatcher();
 		if( !ImageMode && running ) {
@@ -735,7 +859,6 @@ internal sealed partial class MainForm : Form, ISettingsHost, IInfoSource {
 		} else if( NoOcr ) {
 			SetStatus( "OCR なし (グリッド・プレイヤーだけ表示)", OkColor );
 			nameValue.Text = "—";
-			coordinateValue.Text = "—";
 			rawLabel.Text = "OCR: なし";
 			return;
 		} else if( reading.MapName is null ) {
@@ -748,13 +871,9 @@ internal sealed partial class MainForm : Form, ISettingsHost, IInfoSource {
 			SetStatus( "読み取り中", OkColor );
 		}
 
-		nameValue.Text = reading.MapName ?? "—";
+		nameValue.Text = $"{reading.MapName ?? "—"} {(reading.Coordinates?.ToString() is { } c ? $" ({c})" : "")}";
 		nameValue.ForeColor = reading.NameStale ? MutedColor : ForeColor;
-		coordinateValue.Text = reading.Coordinates?.ToString() ?? "—";
-		coordinateValue.ForeColor = reading.CoordinatesStale ? MutedColor : ForeColor;
-		var uiTransform = new UiTransform( reading.UiScale, reading.UiScaleY );
-		var scale = uiTransform.IsIdentity ? "" : $"　UI の倍率 {uiTransform}";
-		rawLabel.Text = $"OCR: 名前「{reading.RawName ?? "-"}」({reading.NameScore:0.00})　座標「{reading.RawCoordinates ?? "-"}」{scale}　オーバーレイ {( HasOverlayData( reading.MapName ) ? "あり" : "なし" )}";
+		rawLabel.Text = $"OCR: {reading.RawName ?? "-"} ({reading.RawCoordinates ?? "-"}) オーバーレイ {( HasOverlayData( reading.MapName ) ? "あり" : "なし" )}";
 		if( reading.NameImage is not null && reading.CoordinateImage is not null ) {
 			UpdatePreview( reading.NameImage, reading.CoordinateImage );
 		}
@@ -762,7 +881,7 @@ internal sealed partial class MainForm : Form, ISettingsHost, IInfoSource {
 
 	// ---- オーバーレイ ----------------------------------------------------------
 
-	/// <summary>種類ごとのチェックボックスと色の見本を、設定に合わせる。</summary>
+	/// <summary>種類ごとのチェックボックス・色・不透明度を、設定に合わせる。</summary>
 	private void LoadLayerSettings() {
 		loadingLayers = true;
 		try {
@@ -774,6 +893,14 @@ internal sealed partial class MainForm : Form, ISettingsHost, IInfoSource {
 			gridSwatch.BackColor = Color.FromArgb( 255, config.GetGridColor() );
 			playerBox.Checked = config.ShowPlayer;
 			playerSwatch.BackColor = Color.FromArgb( 255, config.GetPlayerColor() );
+			overallOpacityBox.Value = Math.Clamp( config.OverlayOpacity, overallOpacityBox.Minimum, overallOpacityBox.Maximum );
+			foreach( var (key, own, box) in opacityRows ) {
+				own.Checked = config.HasOwnOpacity( key );
+				box.Enabled = own.Checked;
+				box.Value = Math.Clamp( config.GetOverlayOpacity( key ), box.Minimum, box.Maximum );
+			}
+			antiAliasCheck.Checked = config.OverlayAntiAlias;
+			customTilesButton.Visible = config.ShowCustomTilesButton;
 			LoadCustomControls();
 			customTiles = config.ShownCustomGroups.Select( group => group.ToCustomTiles() ).ToList();
 		} finally {
@@ -786,11 +913,11 @@ internal sealed partial class MainForm : Form, ISettingsHost, IInfoSource {
 		var groups = config.CustomGroups;
 		if( customControls.Count != groups.Count ) {
 			layersPanel.SuspendLayout();
-			foreach( var (swatch, box) in customControls ) {
-				layersPanel.Controls.Remove( swatch );
+			foreach( var (box, swatch) in customControls ) {
 				layersPanel.Controls.Remove( box );
-				swatch.Dispose();
+				layersPanel.Controls.Remove( swatch );
 				box.Dispose();
+				swatch.Dispose();
 			}
 			customControls.Clear();
 			layersPanel.RowCount = Math.Max( layersPanel.RowCount, CustomFirstRow + groups.Count );
@@ -799,17 +926,18 @@ internal sealed partial class MainForm : Form, ISettingsHost, IInfoSource {
 			}
 			for( var i = 0; i < groups.Count; i++ ) {
 				// 大きさと余白は、DPI に合わせて拡大済みのグリッドの見本・チェックボックスに揃える。
+				// 色はカスタムのマスの編集画面で変えるので、見本はボタンにしない。
 				var swatch = new Panel { Anchor = AnchorStyles.Left, BorderStyle = BorderStyle.FixedSingle, Size = gridSwatch.Size, Margin = gridSwatch.Margin };
 				var box = new CheckBox { Anchor = AnchorStyles.Left, AutoSize = true, Margin = gridBox.Margin, UseVisualStyleBackColor = true };
 				box.CheckedChanged += CustomBox_CheckedChanged;
-				layersPanel.Controls.Add( swatch, 2, CustomFirstRow + i );
-				layersPanel.Controls.Add( box, 3, CustomFirstRow + i );
-				customControls.Add( (swatch, box) );
+				layersPanel.Controls.Add( box, 0, CustomFirstRow + i );
+				layersPanel.Controls.Add( swatch, 1, CustomFirstRow + i );
+				customControls.Add( (box, swatch) );
 			}
 			layersPanel.ResumeLayout( true );
 		}
 		for( var i = 0; i < groups.Count; i++ ) {
-			var (swatch, box) = customControls[i];
+			var (box, swatch) = customControls[i];
 			swatch.BackColor = Color.FromArgb( 255, groups[i].GetColor() ); // 見本は不透明で見せる
 			box.Text = groups[i].Name.Length > 0 ? groups[i].Name : "(名前なし)";
 			box.Checked = groups[i].Shown;
@@ -1002,7 +1130,7 @@ internal sealed partial class MainForm : Form, ISettingsHost, IInfoSource {
 	}
 
 	/// <summary>自分で描くマス (カスタム) の編集画面を開く。</summary>
-	void ISettingsHost.ShowCustomTiles() {
+	private void ShowCustomTiles() {
 		if( customForm is null || customForm.IsDisposed ) {
 			customForm = new CustomTilesForm( config, OverlaySettingsChanged, CaptureGameClientAsync );
 			customForm.Show( this );
@@ -1760,7 +1888,6 @@ internal sealed partial class MainForm : Form, ISettingsHost, IInfoSource {
 		liveButton.Visible = false;
 		toggleButton.Enabled = true;
 		nameValue.Text = reader.ManualMapName ?? reader.Tracker.MapName ?? "—";
-		coordinateValue.Text = reader.Tracker.Coordinates?.ToString() ?? "—";
 		SetStatus( running ? "ライブ読み取りに戻りました" : "一時停止中", MutedColor );
 		settingsForm?.RefreshValues();
 	}

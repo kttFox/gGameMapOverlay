@@ -66,7 +66,7 @@ public sealed class AppConfig
     /// 読み取り間隔。座標欄の見た目が変わったときだけ OCR するので、変わっていない間は小さな範囲のキャプチャ (数 ms) だけで済む。
     /// 長いほど、移動してからオーバーレイが追従するまで遅れる。
     /// </summary>
-    public int IntervalMs { get; set; } = 100;
+    public int IntervalMs { get; set; } = 15;
 
     /// <summary>
     /// キャラクターの移動速度を、座標欄の見た目が変わった間隔から判定する (WalkSpeed)。1 マスのスライドにその等級の 1 歩の時間をかける。
@@ -82,9 +82,6 @@ public sealed class AppConfig
 
     /// <summary>OverlaySlideManual のとき、1 マスのスライドにかける時間 (ミリ秒)。</summary>
     public int OverlaySlideMs { get; set; } = WalkSpeed.DefaultGrade.StepMs;
-
-    public const int MinOverlaySlideMs = 10;
-    public const int MaxOverlaySlideMs = 2000;
 
     /// <summary>今使う 1 歩の時間 (ミリ秒)。</summary>
     [JsonIgnore]
@@ -107,24 +104,19 @@ public sealed class AppConfig
     /// <summary>自動+手動のとき、自動の値に足す時間 (ミリ秒、負なら引く)。</summary>
     public int OverlayJumpDelayExtraMs { get; set; } = 40;
 
-    public const int MaxOverlayJumpDelayExtraMs = 500;
-
     /// <summary>自動の値: 移動速度の 1 歩の半分 (キャラクターの絵が次のマスへ半分進むころ) を 10 ミリ秒単位に丸めたもの。</summary>
     [JsonIgnore]
     public int AutoOverlayJumpDelayMs =>
-        Math.Clamp((int)Math.Round(WalkSpeed.Grade(MoveSpeedGrade).StepMs / 2.0 / 10, MidpointRounding.AwayFromZero) * 10, 0, MaxOverlayJumpDelayMs);
+        (int)Math.Round(WalkSpeed.Grade(MoveSpeedGrade).StepMs / 2.0 / 10, MidpointRounding.AwayFromZero) * 10;
 
     /// <summary>今使う、オフのときの遅延 (ミリ秒)。</summary>
     [JsonIgnore]
     public int EffectiveOverlayJumpDelayMs => OverlayJumpDelayManual
         ? OverlayJumpDelayMs
-        : Math.Clamp(AutoOverlayJumpDelayMs + OverlayJumpDelayExtraMs, 0, MaxOverlayJumpDelayMs);
-
-    public const int MaxOverlayJumpDelayMs = 1000;
+        : Math.Max(0, AutoOverlayJumpDelayMs + OverlayJumpDelayExtraMs);
 
     /// <summary>描いている位置が読み取った座標からこのマス数以上離れたら、滑らせずにすぐ移す。</summary>
     public double OverlaySnapTiles { get; set; } = 1.5;
-
 
     /// <summary>
     /// 止まっているときに移動キー (WASD・矢印キー) を押したら、座標が変わるのを待たずにオーバーレイを押した方向へ 1 マス動かし始める (歩き始めだけ。2 歩目からは座標の変化で動かす)。
@@ -157,8 +149,6 @@ public sealed class AppConfig
     /// </summary>
     public int MoveInputLagMs { get; set; } = 120;
 
-    public const int MaxMoveInputLagMs = 300;
-
     /// <summary>
     /// 一度に何マスも進むスキルのキー (例: "F")。押したら、向いている方向 (最後に歩いた方向) へ MoveSkillTiles マスを
     /// 1 マス MoveSkillTileMs で、読み取りを待たずに動かす。空ならしない。
@@ -177,15 +167,11 @@ public sealed class AppConfig
     /// <summary>移動キーを押してからキャラクターが歩き出すまでの時間 (ミリ秒)。</summary>
     public int MoveKeyDelayMs { get; set; } = 40;
 
-    public const int MaxMoveKeyDelayMs = 500;
-
     /// <summary>
     /// 1 歩目 (歩き始め) で、移動キーを押してから座標欄の見た目を確かめるまでの時間 (ミリ秒)。
     /// このとき変わっていなければ歩いていないとみなし、先に動かした分を戻す。
     /// </summary>
     public int MoveStartCheckMs { get; set; } = 40;
-
-    public const int MaxMoveStartCheckMs = 500;
 
     /// <summary>
     /// 移動キーの組み合わせ (例: "W", "WD") → 歩く方向 [x, y] (マス単位の -1〜1)。
@@ -216,14 +202,11 @@ public sealed class AppConfig
     /// <summary>読めない状態がこの秒数を超えたら、最後の結果を古いもの (Stale) として扱う。</summary>
     public double NameHoldSeconds { get; set; } = 3.0;
 
-    public const double MinNameRefreshSeconds = 0.1;
-    public const double MaxNameRefreshSeconds = 60;
-    public const int MaxNameConfirmHits = 10;
-    public const double MinNameHoldSeconds = 0.5;
-    public const double MaxNameHoldSeconds = 60;
-
     /// <summary>設定画面で詳細設定 (処理・マップ名) を表示する。</summary>
     public bool ShowAdvancedSettings { get; set; }
+
+    /// <summary>メイン画面にカスタムのマスの編集ボタンを出す (タイトルバーのアイコンの右クリックメニューで切り替える)。</summary>
+    public bool ShowCustomTilesButton { get; set; }
 
     /// <summary>
     /// オーバーレイに表示するデータの種類 (OverlayLayer.Key → 表示するか)。書いていない種類は表示する。
@@ -421,13 +404,7 @@ public sealed class AppConfig
         config.WindowTitle ??= "";
         config.IntervalMs = config.IntervalMs;
         config.MoveSpeedGrade = Math.Clamp(config.MoveSpeedGrade, 0, WalkSpeed.Grades.Count - 1);
-        config.OverlaySlideMs = Math.Clamp(config.OverlaySlideMs, MinOverlaySlideMs, MaxOverlaySlideMs);
-        config.OverlayJumpDelayMs = Math.Clamp(config.OverlayJumpDelayMs, 0, MaxOverlayJumpDelayMs);
-        config.OverlayJumpDelayExtraMs = Math.Clamp(config.OverlayJumpDelayExtraMs, -MaxOverlayJumpDelayExtraMs, MaxOverlayJumpDelayExtraMs);
         config.OverlaySnapTiles = Math.Max(0, config.OverlaySnapTiles);
-        config.MoveKeyDelayMs = Math.Clamp(config.MoveKeyDelayMs, 0, MaxMoveKeyDelayMs);
-        config.MoveStartCheckMs = Math.Clamp(config.MoveStartCheckMs, 0, MaxMoveStartCheckMs);
-        config.MoveInputLagMs = Math.Clamp(config.MoveInputLagMs, 0, MaxMoveInputLagMs);
         config.MoveSkillKey ??= "";
         config.MoveSkillTileMs = Math.Clamp(config.MoveSkillTileMs, 10, 1000);
         config.MoveKeyDirections ??= [];
@@ -440,9 +417,6 @@ public sealed class AppConfig
         {
             config.OcrThreads = Math.Clamp(threads, 1, MaxOcrThreads);
         }
-        config.NameRefreshSeconds = Math.Clamp(config.NameRefreshSeconds, MinNameRefreshSeconds, MaxNameRefreshSeconds);
-        config.NameConfirmHits = Math.Clamp(config.NameConfirmHits, 1, MaxNameConfirmHits);
-        config.NameHoldSeconds = Math.Clamp(config.NameHoldSeconds, MinNameHoldSeconds, MaxNameHoldSeconds);
         return config;
     }
 

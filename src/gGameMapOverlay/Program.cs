@@ -2,11 +2,17 @@ namespace gGameMapOverlay;
 
 internal static class Program
 {
-    [STAThread]
+    public static bool IsDebug { get; private set; }
+
+	[STAThread]
     private static void Main(string[] args)
     {
-        // --encrypt-data <SRC_DIR> <OUT_DIR>: SRC_DIR の *.json を暗号化して OUT_DIR に *.pak を書く (Overlay.DataCipher)
-        if (Array.IndexOf(args, "--encrypt-data") is var encrypt and >= 0)
+#if DEBUG
+		IsDebug = true;
+#endif
+
+		// --encrypt-data <SRC_DIR> <OUT_DIR>: SRC_DIR の *.json を暗号化して OUT_DIR に *.pak を書く (Overlay.DataCipher)
+		if( Array.IndexOf(args, "--encrypt-data") is var encrypt and >= 0)
         {
             EncryptData(args.Skip(encrypt + 1).Take(2).ToArray());
             return;
