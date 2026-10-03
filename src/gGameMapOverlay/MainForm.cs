@@ -983,6 +983,9 @@ internal sealed partial class MainForm : Form, ISettingsHost, IInfoSource {
 			coordinates = null;
 		}
 		shownCoordinates = coordinates;
+		if( scene is not null ) {
+			overlay.SetCovered( scene.ClientRect, reader.CoveringWindows() ); // 他のウィンドウに隠れたところには描かない
+		}
 		overlay.ShowScene( scene, lagMs );
 	}
 

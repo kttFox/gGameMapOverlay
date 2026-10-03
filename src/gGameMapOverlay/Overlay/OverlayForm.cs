@@ -1141,6 +1141,31 @@ internal sealed class OverlayForm : Form
         }
     }
 
+    private Rectangle[] covered = [];
+
+    /// <summary>他のウィンドウに隠れているところ (スクリーン座標) を切り抜く。clientRect はオーバーレイを出す位置。</summary>
+    public void SetCovered(Rectangle clientRect, IReadOnlyList<Rectangle> windows)
+    {
+        var next = windows.Select(window => Rectangle.Intersect(window, clientRect)).Where(area => !area.IsEmpty)
+            .Select(area => area with { X = area.X - clientRect.X, Y = area.Y - clientRect.Y }).ToArray();
+        if (next.SequenceEqual(covered))
+        {
+            return;
+        }
+        covered = next;
+        if (next.Length == 0)
+        {
+            Region = null;
+            return;
+        }
+        var region = new Region(new Rectangle(Point.Empty, clientRect.Size));
+        foreach (var area in next)
+        {
+            region.Exclude(area);
+        }
+        Region = region; // 以前の Region は Form が破棄する
+    }
+
     /// <summary>null なら隠す。lagMs は座標が変わってから描くまでの遅れの見積もり (歩く速さを測るのに使う)。</summary>
     public void ShowScene(OverlayScene? next, double lagMs = 0)
     {

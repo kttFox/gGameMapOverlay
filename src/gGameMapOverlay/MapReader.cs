@@ -139,6 +139,9 @@ public sealed class MapReader : IDisposable
     /// <summary>ゲームのウィンドウがアクティブ (キー入力を受け取っている) か。</summary>
     public bool IsGameActive() => FindClientRect() is not null && GameWindow.IsActive(hwnd);
 
+    /// <summary>ゲームを隠している他のウィンドウの位置 (スクリーン座標)。</summary>
+    public List<Rectangle> CoveringWindows() => GameWindow.CoveringWindows(hwnd);
+
     public bool IsGameForeground() => !config.RequireForeground || FindClientRect() is { } client && IsGameVisible(client);
 
     private bool IsGameVisible(Rectangle client)

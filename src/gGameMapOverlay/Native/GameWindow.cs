@@ -192,7 +192,7 @@ public static class GameWindow
             {
                 return true;
             }
-            if (DwmGetWindowAttribute(hwnd, DwmwaCloaked, out var cloaked, sizeof(int)) == 0 && cloaked != 0)
+            if (DwmGetWindowAttribute(hwnd, DwmwaCloaked, out int cloaked, sizeof(int)) == 0 && cloaked != 0)
             {
                 return true; // 別の仮想デスクトップのウィンドウや、中断中のストアアプリなど
             }
@@ -287,15 +287,34 @@ public static class GameWindow
         {
             return false;
         }
+        var covering = CoveringWindows(hwnd);
+        return !areas.Any(area => covering.Any(area.IntersectsWith));
+    }
+
+    private const uint DwmwaExtendedFrameBounds = 9;
+
+    [DllImport("dwmapi.dll")]
+    private static extern int DwmGetWindowAttribute(nint hwnd, uint attribute, out Rect value, int size);
+
+    /// <summary>
+    /// Z オーダーでゲームより上にあって、ゲームを隠している他のプロセスのウィンドウの位置 (スクリーン座標)。
+    /// 自プロセスのウィンドウ・透明なウィンドウ・見えていないウィンドウは除く。
+    /// </summary>
+    public static List<Rectangle> CoveringWindows(nint hwnd)
+    {
+        var result = new List<Rectangle>();
+        if (hwnd == 0 || !IsWindow(hwnd))
+        {
+            return result;
+        }
         static nint Root(nint window) => GetAncestor(window, GaRoot) is var root && root != 0 ? root : window;
-        // Z オーダーでゲームより上にあるトップレベルウィンドウを順に調べる。
         for (var above = GetWindow(Root(hwnd), GwHwndPrev); above != 0; above = GetWindow(above, GwHwndPrev))
         {
             if (!IsWindowVisible(above) || IsIconic(above))
             {
                 continue;
             }
-            if (DwmGetWindowAttribute(above, DwmwaCloaked, out var cloaked, sizeof(int)) == 0 && cloaked != 0)
+            if (DwmGetWindowAttribute(above, DwmwaCloaked, out int cloaked, sizeof(int)) == 0 && cloaked != 0)
             {
                 continue; // 別の仮想デスクトップのウィンドウなど、実際には見えていない
             }
@@ -304,17 +323,22 @@ public static class GameWindow
                 continue; // マウスジェスチャーの描画用など、透明な全画面オーバーレイは隠していない
             }
             GetWindowThreadProcessId(above, out var processId);
-            if (processId == Environment.ProcessId || !GetWindowRect(above, out var rect))
+            if (processId == Environment.ProcessId)
+            {
+                continue;
+            }
+            // 影を含まない見た目の枠を使う (GetWindowRect は影の分だけ広い)。
+            if (DwmGetWindowAttribute(above, DwmwaExtendedFrameBounds, out Rect rect, Marshal.SizeOf<Rect>()) != 0 && !GetWindowRect(above, out rect))
             {
                 continue;
             }
             var bounds = Rectangle.FromLTRB(rect.Left, rect.Top, rect.Right, rect.Bottom);
-            if (areas.Any(area => area.IntersectsWith(bounds)))
+            if (!bounds.IsEmpty)
             {
-                return false;
+                result.Add(bounds);
             }
         }
-        return true;
+        return result;
     }
 
     /// <summary>
