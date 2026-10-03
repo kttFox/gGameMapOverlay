@@ -47,7 +47,7 @@ partial class CustomTilesForm
 		this.opacityCaption = new Label();
 		this.opacityPanel = new FlowLayoutPanel();
 		this.opacityCheck = new CheckBox();
-		this.opacityBox = new NumericUpDown();
+		this.opacityBox = new StepNumericUpDown();
 		this.opacityUnit = new Label();
 		this.shapeCaption = new Label();
 		this.shapePanel = new FlowLayoutPanel();
@@ -535,7 +535,7 @@ partial class CustomTilesForm
 	private Label opacityCaption;
 	private FlowLayoutPanel opacityPanel;
 	private CheckBox opacityCheck;
-	private NumericUpDown opacityBox;
+	private StepNumericUpDown opacityBox;
 	private Label opacityUnit;
 	private Label shapeCaption;
 	private FlowLayoutPanel shapePanel;

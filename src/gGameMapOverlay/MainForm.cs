@@ -952,7 +952,7 @@ internal sealed partial class MainForm : Form, ISettingsHost, IInfoSource {
 				// 色はカスタムのマスの編集画面で変えるので、見本はボタンにしない。
 				var swatch = new Panel { Anchor = AnchorStyles.Left, BorderStyle = BorderStyle.FixedSingle, Size = gridSwatch.Size, Margin = gridSwatch.Margin };
 				var box = new CheckBox { Anchor = AnchorStyles.Left, AutoSize = true, Margin = gridBox.Margin, UseVisualStyleBackColor = true };
-				var opacity = new NumericUpDown {
+				var opacity = new StepNumericUpDown {
 					Anchor = AnchorStyles.Left, Size = gridOpacityBox.Size, Margin = gridOpacityBox.Margin, TextAlign = HorizontalAlignment.Right,
 					Increment = gridOpacityBox.Increment, Minimum = AppConfig.MinOverlayOpacity, Maximum = AppConfig.MaxOverlayOpacity,
 				};
