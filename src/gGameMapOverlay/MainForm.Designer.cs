@@ -80,6 +80,7 @@ partial class MainForm
 		this.customTilesButton = new Button();
 		this.overlayOptionPanel = new FlowLayoutPanel();
 		this.antiAliasCheck = new CheckBox();
+		this.dottedCheck = new CheckBox();
 		this.controlsPanel = new TableLayoutPanel();
 		this.toggleButton = new Button();
 		this.updateStatusLabel = new Label();
@@ -100,14 +101,14 @@ partial class MainForm
 		this.namePanel.SuspendLayout();
 		this.overlayPanel.SuspendLayout();
 		this.layersPanel.SuspendLayout();
-		( (System.ComponentModel.ISupportInitialize)this.overallOpacityBox ).BeginInit();
+		( this.overallOpacityBox ).BeginInit();
 		this.colorMenu.SuspendLayout();
-		( (System.ComponentModel.ISupportInitialize)this.impassableEdgeOpacityBox ).BeginInit();
-		( (System.ComponentModel.ISupportInitialize)this.monsterBlockOpacityBox ).BeginInit();
-		( (System.ComponentModel.ISupportInitialize)this.mapMoveOpacityBox ).BeginInit();
-		( (System.ComponentModel.ISupportInitialize)this.specialOpacityBox ).BeginInit();
-		( (System.ComponentModel.ISupportInitialize)this.gridOpacityBox ).BeginInit();
-		( (System.ComponentModel.ISupportInitialize)this.playerOpacityBox ).BeginInit();
+		( this.impassableEdgeOpacityBox ).BeginInit();
+		( this.monsterBlockOpacityBox ).BeginInit();
+		( this.mapMoveOpacityBox ).BeginInit();
+		( this.specialOpacityBox ).BeginInit();
+		( this.gridOpacityBox ).BeginInit();
+		( this.playerOpacityBox ).BeginInit();
 		this.flowLayoutPanel1.SuspendLayout();
 		this.overlayOptionPanel.SuspendLayout();
 		this.controlsPanel.SuspendLayout();
@@ -354,7 +355,7 @@ partial class MainForm
 		this.layersPanel.RowStyles.Add( new RowStyle() );
 		this.layersPanel.RowStyles.Add( new RowStyle() );
 		this.layersPanel.RowStyles.Add( new RowStyle( SizeType.Absolute, 20F ) );
-		this.layersPanel.Size = new Size( 220, 175 );
+		this.layersPanel.Size = new Size( 217, 175 );
 		this.layersPanel.TabIndex = 12;
 		// 
 		// overallOpacityLabel
@@ -599,8 +600,8 @@ partial class MainForm
 		// 
 		this.mapMoveOpacityUnit.Anchor = AnchorStyles.Left;
 		this.mapMoveOpacityUnit.AutoSize = true;
+		this.mapMoveOpacityUnit.Location = new Point( 197, 80 );
 		this.mapMoveOpacityUnit.Margin = new Padding( 0, 0, 3, 0 );
-		this.mapMoveOpacityUnit.Location = new Point( 200, 80 );
 		this.mapMoveOpacityUnit.Name = "mapMoveOpacityUnit";
 		this.mapMoveOpacityUnit.Size = new Size( 17, 15 );
 		this.mapMoveOpacityUnit.TabIndex = 13;
@@ -665,8 +666,8 @@ partial class MainForm
 		// 
 		this.specialOpacityUnit.Anchor = AnchorStyles.Left;
 		this.specialOpacityUnit.AutoSize = true;
+		this.specialOpacityUnit.Location = new Point( 197, 105 );
 		this.specialOpacityUnit.Margin = new Padding( 0, 0, 3, 0 );
-		this.specialOpacityUnit.Location = new Point( 200, 105 );
 		this.specialOpacityUnit.Name = "specialOpacityUnit";
 		this.specialOpacityUnit.Size = new Size( 17, 15 );
 		this.specialOpacityUnit.TabIndex = 17;
@@ -731,8 +732,8 @@ partial class MainForm
 		// 
 		this.gridOpacityUnit.Anchor = AnchorStyles.Left;
 		this.gridOpacityUnit.AutoSize = true;
+		this.gridOpacityUnit.Location = new Point( 197, 130 );
 		this.gridOpacityUnit.Margin = new Padding( 0, 0, 3, 0 );
-		this.gridOpacityUnit.Location = new Point( 200, 130 );
 		this.gridOpacityUnit.Name = "gridOpacityUnit";
 		this.gridOpacityUnit.Size = new Size( 17, 15 );
 		this.gridOpacityUnit.TabIndex = 21;
@@ -797,8 +798,8 @@ partial class MainForm
 		// 
 		this.playerOpacityUnit.Anchor = AnchorStyles.Left;
 		this.playerOpacityUnit.AutoSize = true;
+		this.playerOpacityUnit.Location = new Point( 197, 155 );
 		this.playerOpacityUnit.Margin = new Padding( 0, 0, 3, 0 );
-		this.playerOpacityUnit.Location = new Point( 200, 155 );
 		this.playerOpacityUnit.Name = "playerOpacityUnit";
 		this.playerOpacityUnit.Size = new Size( 17, 15 );
 		this.playerOpacityUnit.TabIndex = 25;
@@ -809,7 +810,7 @@ partial class MainForm
 		this.flowLayoutPanel1.Anchor =  AnchorStyles.Bottom  |  AnchorStyles.Left ;
 		this.flowLayoutPanel1.AutoSize = true;
 		this.flowLayoutPanel1.Controls.Add( this.customTilesButton );
-		this.flowLayoutPanel1.Location = new Point( 235, 151 );
+		this.flowLayoutPanel1.Location = new Point( 232, 151 );
 		this.flowLayoutPanel1.Margin = new Padding( 15, 3, 3, 0 );
 		this.flowLayoutPanel1.Name = "flowLayoutPanel1";
 		this.flowLayoutPanel1.Size = new Size( 106, 30 );
@@ -836,11 +837,12 @@ partial class MainForm
 		this.overlayOptionPanel.AutoSize = true;
 		this.overlayOptionPanel.AutoSizeMode = AutoSizeMode.GrowAndShrink;
 		this.overlayOptionPanel.Controls.Add( this.antiAliasCheck );
+		this.overlayOptionPanel.Controls.Add( this.dottedCheck );
 		this.overlayOptionPanel.FlowDirection = FlowDirection.TopDown;
-		this.overlayOptionPanel.Location = new Point( 232, 4 );
+		this.overlayOptionPanel.Location = new Point( 229, 4 );
 		this.overlayOptionPanel.Margin = new Padding( 12, 4, 0, 2 );
 		this.overlayOptionPanel.Name = "overlayOptionPanel";
-		this.overlayOptionPanel.Size = new Size( 103, 25 );
+		this.overlayOptionPanel.Size = new Size( 103, 50 );
 		this.overlayOptionPanel.TabIndex = 13;
 		this.overlayOptionPanel.WrapContents = false;
 		// 
@@ -856,6 +858,19 @@ partial class MainForm
 		this.toolTip.SetToolTip( this.antiAliasCheck, "線の縁をなめらかにします" );
 		this.antiAliasCheck.UseVisualStyleBackColor = true;
 		this.antiAliasCheck.CheckedChanged +=  this.AntiAliasCheck_CheckedChanged ;
+		// 
+		// dottedCheck
+		// 
+		this.dottedCheck.Anchor = AnchorStyles.Left;
+		this.dottedCheck.AutoSize = true;
+		this.dottedCheck.Location = new Point( 3, 28 );
+		this.dottedCheck.Name = "dottedCheck";
+		this.dottedCheck.Size = new Size( 74, 19 );
+		this.dottedCheck.TabIndex = 1;
+		this.dottedCheck.Text = "ドット表現";
+		this.toolTip.SetToolTip( this.dottedCheck, "マスを 1 画素おきのドットで塗ります" );
+		this.dottedCheck.UseVisualStyleBackColor = true;
+		this.dottedCheck.CheckedChanged +=  this.DottedCheck_CheckedChanged ;
 		// 
 		// controlsPanel
 		// 
@@ -1008,14 +1023,14 @@ partial class MainForm
 		this.overlayPanel.PerformLayout();
 		this.layersPanel.ResumeLayout( false );
 		this.layersPanel.PerformLayout();
-		( (System.ComponentModel.ISupportInitialize)this.overallOpacityBox ).EndInit();
+		( this.overallOpacityBox ).EndInit();
 		this.colorMenu.ResumeLayout( false );
-		( (System.ComponentModel.ISupportInitialize)this.impassableEdgeOpacityBox ).EndInit();
-		( (System.ComponentModel.ISupportInitialize)this.monsterBlockOpacityBox ).EndInit();
-		( (System.ComponentModel.ISupportInitialize)this.mapMoveOpacityBox ).EndInit();
-		( (System.ComponentModel.ISupportInitialize)this.specialOpacityBox ).EndInit();
-		( (System.ComponentModel.ISupportInitialize)this.gridOpacityBox ).EndInit();
-		( (System.ComponentModel.ISupportInitialize)this.playerOpacityBox ).EndInit();
+		( this.impassableEdgeOpacityBox ).EndInit();
+		( this.monsterBlockOpacityBox ).EndInit();
+		( this.mapMoveOpacityBox ).EndInit();
+		( this.specialOpacityBox ).EndInit();
+		( this.gridOpacityBox ).EndInit();
+		( this.playerOpacityBox ).EndInit();
 		this.flowLayoutPanel1.ResumeLayout( false );
 		this.flowLayoutPanel1.PerformLayout();
 		this.overlayOptionPanel.ResumeLayout( false );
@@ -1055,6 +1070,7 @@ partial class MainForm
     private Label playerOpacityUnit;
     private FlowLayoutPanel overlayOptionPanel;
     private CheckBox antiAliasCheck;
+    private CheckBox dottedCheck;
     private Button customTilesButton;
     private ToolTip toolTip;
     private TableLayoutPanel headerPanel;

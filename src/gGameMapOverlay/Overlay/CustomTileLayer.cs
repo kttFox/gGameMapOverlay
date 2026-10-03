@@ -17,6 +17,9 @@ public sealed class CustomTileLayer
     /// <summary>"#RRGGBB"。読めない値なら CustomTileGroup.DefaultColor。</summary>
     public string Color { get; set; } = ToHtml(CustomTileGroup.DefaultColor);
 
+    /// <summary>マスを 1 画素おきのドットで塗るか。</summary>
+    public bool Dotted { get; set; }
+
     /// <summary>
     /// キャラクターのいるマスからの相対位置と形の一覧。[dx, dy] は 1 マス全部、[dx, dy, mask] は形 (CustomTileShape.Mask) の部分だけ
     /// (FrameFlag があれば枠も描く)、[dx, dy, mask, thickness] は線の太さを 1/thickness マスにした形
@@ -122,7 +125,7 @@ public sealed class CustomTileLayer
     public CustomTiles ToCustomTiles(int opacity = AppConfig.DefaultOverlayOpacity, string name = "")
     {
         var division = FillDivision();
-        return new(ToTileRects(division, name), ToFrameRects(name), GetColor(opacity), division);
+        return new(ToTileRects(division, name), ToFrameRects(name), GetColor(opacity), division, Dotted);
     }
 
     /// <summary>読み込んだ値を直す (壊れたマス・重複を除く)。</summary>

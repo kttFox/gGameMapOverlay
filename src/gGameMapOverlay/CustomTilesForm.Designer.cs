@@ -62,6 +62,7 @@ partial class CustomTilesForm
 		this.colorPanel = new FlowLayoutPanel();
 		this.colorCaption = new Label();
 		this.colorButton = new Button();
+		this.dottedCheck = new CheckBox();
 		this.shapeCaption = new Label();
 		this.shapePanel = new FlowLayoutPanel();
 		this.thicknessPanel = new FlowLayoutPanel();
@@ -518,10 +519,11 @@ partial class CustomTilesForm
 		this.colorPanel.AutoSize = true;
 		this.colorPanel.Controls.Add( this.colorCaption );
 		this.colorPanel.Controls.Add( this.colorButton );
+		this.colorPanel.Controls.Add( this.dottedCheck );
 		this.colorPanel.Location = new Point( 0, 157 );
 		this.colorPanel.Margin = new Padding( 0 );
 		this.colorPanel.Name = "colorPanel";
-		this.colorPanel.Size = new Size( 117, 29 );
+		this.colorPanel.Size = new Size( 182, 29 );
 		this.colorPanel.TabIndex = 12;
 		this.colorPanel.WrapContents = false;
 		// 
@@ -545,6 +547,18 @@ partial class CustomTilesForm
 		this.colorButton.TabIndex = 1;
 		this.colorButton.UseVisualStyleBackColor = false;
 		this.colorButton.Click +=  this.ColorButton_Click ;
+		// 
+		// dottedCheck
+		// 
+		this.dottedCheck.Anchor = AnchorStyles.Left;
+		this.dottedCheck.AutoSize = true;
+		this.dottedCheck.Location = new Point( 120, 5 );
+		this.dottedCheck.Name = "dottedCheck";
+		this.dottedCheck.Size = new Size( 59, 19 );
+		this.dottedCheck.TabIndex = 2;
+		this.dottedCheck.Text = "ドット";
+		this.dottedCheck.UseVisualStyleBackColor = true;
+		this.dottedCheck.CheckedChanged +=  this.DottedCheck_CheckedChanged ;
 		// 
 		// shapeCaption
 		// 
@@ -887,6 +901,7 @@ partial class CustomTilesForm
 	private TextBox nameBox;
 	private Label colorCaption;
 	private Button colorButton;
+	private CheckBox dottedCheck;
 	private Label opacityCaption;
 	private FlowLayoutPanel opacityPanel;
 	private CheckBox opacityCheck;

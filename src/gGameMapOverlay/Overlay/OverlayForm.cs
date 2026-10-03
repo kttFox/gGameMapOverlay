@@ -1233,6 +1233,24 @@ internal sealed class OverlayForm : Form
 
     private bool antiAliasEnabled = true;
 
+    /// <summary>地形のマスを 1 画素おきのドット (市松模様) で塗るか。自分で描いたマスはレイヤーごとに持つ (CustomTileLayer.Dotted)。</summary>
+    [System.ComponentModel.DesignerSerializationVisibility(System.ComponentModel.DesignerSerializationVisibility.Hidden)]
+    public bool DottedTiles
+    {
+        get => dottedTiles;
+        set
+        {
+            if (value != dottedTiles)
+            {
+                dottedTiles = value;
+                Redraw();
+            }
+        }
+    }
+
+    // DrawTiles は static なので static に持つ (オーバーレイは 1 つだけ)。
+    private static bool dottedTiles;
+
     protected override void OnHandleCreated(EventArgs e)
     {
         base.OnHandleCreated(e);
@@ -1280,16 +1298,16 @@ internal sealed class OverlayForm : Form
     // チャンクは画素の正方形なので、隣のチャンクとは同じ形を同じ位置で描いて切り分けるだけになり、継ぎ目は出ない。
 
     /// <summary>地形の中身が同じか (キャラクターの位置や除外範囲は見ない)。</summary>
-    private sealed record TerrainKey(IReadOnlyList<(OverlayLayer Layer, TileRects Tiles, Color Color)> Layers, Color? GridColor, double TileWidth, double TileHeight, bool AntiAlias)
+    private sealed record TerrainKey(IReadOnlyList<(OverlayLayer Layer, TileRects Tiles, Color Color)> Layers, Color? GridColor, double TileWidth, double TileHeight, bool AntiAlias, bool Dotted)
     {
         public bool Equals(TerrainKey? other) =>
             other is not null && GridColor == other.GridColor && TileWidth == other.TileWidth && TileHeight == other.TileHeight
-            && AntiAlias == other.AntiAlias && Layers.SequenceEqual(other.Layers);
+            && AntiAlias == other.AntiAlias && Dotted == other.Dotted && Layers.SequenceEqual(other.Layers);
 
-        public override int GetHashCode() => HashCode.Combine(Layers.Count, GridColor, TileWidth, TileHeight, AntiAlias);
+        public override int GetHashCode() => HashCode.Combine(Layers.Count, GridColor, TileWidth, TileHeight, AntiAlias, Dotted);
 
         public static TerrainKey Of(OverlayScene scene, bool antiAlias) =>
-            new(scene.Layers, scene.GridColor, scene.Grid.TileWidth, scene.Grid.TileHeight, antiAlias);
+            new(scene.Layers, scene.GridColor, scene.Grid.TileWidth, scene.Grid.TileHeight, antiAlias, dottedTiles);
 
         /// <summary>previous から何が変わったか (ログ用)。</summary>
         public string DescribeChange(TerrainKey previous)
@@ -1310,6 +1328,10 @@ internal sealed class OverlayForm : Form
             if (AntiAlias != previous.AntiAlias)
             {
                 changes.Add($"アンチエイリアス {previous.AntiAlias} → {AntiAlias}");
+            }
+            if (Dotted != previous.Dotted)
+            {
+                changes.Add($"ドット {previous.Dotted} → {Dotted}");
             }
             return string.Join("、", changes);
 
@@ -1546,7 +1568,7 @@ internal sealed class OverlayForm : Form
         {
             // 下に描いた種類と重なるマスを小さく描く種類 (ShrinkOver) なら、その種類のマスを渡す。表示していなければ縮めない。
             var under = layer.ShrinkOver is { } shrinkOver ? current.Layers.FirstOrDefault(entry => entry.Layer == shrinkOver).Tiles : null;
-            DrawTiles(graphics, grid, tiles, color, visible, under);
+            DrawTiles(graphics, grid, tiles, color, visible, under, dottedTiles);
         }
     }
 
@@ -1564,7 +1586,7 @@ internal sealed class OverlayForm : Form
     /// <summary>1 グループ分の自分で描いたマス。grid はキャラクターのいるマスを (0, 0) にした格子 (編集画面でも使う)。</summary>
     internal static void DrawCustomTiles(Graphics graphics, IsoGrid grid, CustomTiles tiles, RectangleF visible)
     {
-        DrawTiles(graphics, CustomTileGroup.SubGrid(grid, tiles.Division), tiles.Fill, tiles.Color, visible);
+        DrawTiles(graphics, CustomTileGroup.SubGrid(grid, tiles.Division), tiles.Fill, tiles.Color, visible, dotted: tiles.Dotted);
         if (tiles.Frames.Rects.Length == 0)
         {
             return;
@@ -1597,7 +1619,7 @@ internal sealed class OverlayForm : Form
     /// (半透明でも色が混ざらない)。
     /// </summary>
     /// <param name="under">これと重なるマスは ShrinkScale 倍に縮めて描く (下のマスが周りに見えるように)。</param>
-    internal static void DrawTiles(Graphics graphics, IsoGrid grid, TileRects tiles, Color color, RectangleF visible, TileRects? under = null)
+    internal static void DrawTiles(Graphics graphics, IsoGrid grid, TileRects tiles, Color color, RectangleF visible, TileRects? under = null, bool dotted = false)
     {
         // 隣り合う長方形 (マス) の境目に縁を描かないよう、長方形の辺を集めて 2 回出てきた部分 (内側の境目) を消す。
         // 辺は線 (縦か, 位置) ごとに区間の端を集める。横の線 y は (from, y)-(to, y)、縦の線 x は (x, from)-(x, to)。
@@ -1662,7 +1684,8 @@ internal sealed class OverlayForm : Form
             }
         }
         (graphics.CompositingMode, graphics.SmoothingMode) = (compositing, smoothing);
-        using var fill = new SolidBrush(color);
+        // ドットの模様は画面の原点に揃うので、隣の長方形と継ぎ目なくつながる。
+        using Brush fill = dotted ? new HatchBrush(HatchStyle.Percent50, color, Color.Transparent) : new SolidBrush(color);
         using var edge = new Pen(Color.FromArgb(color.A, ControlPaint.Light(color)));
         foreach (var polygon in polygons)
         {

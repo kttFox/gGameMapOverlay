@@ -312,6 +312,9 @@ public sealed class AppConfig
     /// <summary>オーバーレイにアンチエイリアスをかけるか。</summary>
     public bool OverlayAntiAlias { get; set; } = true;
 
+    /// <summary>地形のマスを 1 画素おきのドットで塗るか (自分で描いたマスはレイヤーごとに持つ)。</summary>
+    public bool OverlayDotted { get; set; }
+
     /// <summary>地形の画像のチャンクの境目と番号をオーバーレイに描くか (確かめる用)。</summary>
     public bool OverlayShowChunks { get; set; }
 

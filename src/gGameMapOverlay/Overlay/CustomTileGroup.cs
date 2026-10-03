@@ -6,7 +6,7 @@ namespace gGameMapOverlay.Overlay;
 /// <summary>オーバーレイに渡す 1 レイヤー分のマス。</summary>
 /// <param name="Fill">塗る長方形 (相対位置、1/Division マス単位。CustomTileGroup.SubGrid の格子で描く)。</param>
 /// <param name="Frames">枠を描くマス (相対位置、1 マス単位)。</param>
-public sealed record CustomTiles(TileRects Fill, TileRects Frames, DrawingColor Color, int Division = CustomTileGroup.Division);
+public sealed record CustomTiles(TileRects Fill, TileRects Frames, DrawingColor Color, int Division = CustomTileGroup.Division, bool Dotted = false);
 
 /// <summary>
 /// 自分で描くマス (カスタム) の 1 グループ。マスはキャラクターのいるマスからの相対位置で持ち、

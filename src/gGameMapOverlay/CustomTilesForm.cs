@@ -9,7 +9,7 @@ namespace gGameMapOverlay;
 /// </summary>
 internal sealed partial class CustomTilesForm : Form {
 	// 追加したグループ・レイヤーに順に使う色 (マップのデータの種類・プレイヤーの枠と見分けやすい色)。
-	private static readonly Color[] Palette = [
+	internal static readonly Color[] Palette = [
 		CustomTileGroup.DefaultColor,
 		Color.FromArgb( 255, 152, 0 ),
 		Color.FromArgb( 233, 30, 99 ),
@@ -172,7 +172,8 @@ internal sealed partial class CustomTilesForm : Form {
 	private static Bitmap LayerSwatch( CustomTileLayer layer, Size size ) {
 		var bitmap = new Bitmap( size.Width, size.Height );
 		using var graphics = Graphics.FromImage( bitmap );
-		using var fill = new SolidBrush( Color.FromArgb( 255, layer.GetColor() ) );
+		var color = Color.FromArgb( 255, layer.GetColor() );
+		using Brush fill = layer.Dotted ? new System.Drawing.Drawing2D.HatchBrush( System.Drawing.Drawing2D.HatchStyle.Percent50, color, Color.White ) : new SolidBrush( color );
 		graphics.FillRectangle( fill, 0, 0, size.Width - 1, size.Height - 1 );
 		graphics.DrawRectangle( Pens.Gray, 0, 0, size.Width - 1, size.Height - 1 );
 		return bitmap;
@@ -212,6 +213,11 @@ internal sealed partial class CustomTilesForm : Form {
 		var index = SelectedLayerIndex;
 		colorButton.Enabled = layer is not null;
 		colorButton.BackColor = layer is null ? SystemColors.Control : Color.FromArgb( 255, layer.GetColor() );
+		dottedCheck.Enabled = layer is not null;
+		var wasRefreshing = refreshing;
+		refreshing = true;
+		dottedCheck.Checked = layer?.Dotted ?? false;
+		refreshing = wasRefreshing;
 		layerAddButton.Enabled = group is not null;
 		layerRemoveButton.Enabled = group is { Layers.Count: > 1 } && layer is not null;
 		layerUpButton.Enabled = layer is not null && index > 0;
@@ -451,12 +457,21 @@ internal sealed partial class CustomTilesForm : Form {
 		if( Selected is not { } group || SelectedLayer is not { } layer ) {
 			return;
 		}
-		using var dialog = new ColorDialog { Color = Color.FromArgb( 255, layer.GetColor() ), FullOpen = true };
-		if( dialog.ShowDialog( this ) != DialogResult.OK ) {
+		if( ColorPicker.Choose( this, layer.GetColor() ) is not { } color ) {
 			return;
 		}
 		RecordUndo();
-		layer.SetColor( dialog.Color );
+		layer.SetColor( color );
+		RefreshList( groups.IndexOf( group ), group.Layers.IndexOf( layer ) );
+		ShowPreview();
+	}
+
+	private void DottedCheck_CheckedChanged( object? sender, EventArgs e ) {
+		if( refreshing || Selected is not { } group || SelectedLayer is not { } layer || layer.Dotted == dottedCheck.Checked ) {
+			return;
+		}
+		RecordUndo();
+		layer.Dotted = dottedCheck.Checked;
 		RefreshList( groups.IndexOf( group ), group.Layers.IndexOf( layer ) );
 		ShowPreview();
 	}

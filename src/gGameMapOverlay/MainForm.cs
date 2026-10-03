@@ -141,6 +141,7 @@ internal sealed partial class MainForm : Form, ISettingsHost, IInfoSource {
 		LoadWindowChoices();
 		UpdateOcrControls();
 		overlay.AntiAlias = config.OverlayAntiAlias;
+		overlay.DottedTiles = config.OverlayDotted;
 		overlay.ShowChunks = config.OverlayShowChunks;
 		overlay.SlideMs = config.OverlaySlide ? StepMs : 0;
 		overlay.JumpDelayMs = config.OverlaySlide ? 0 : config.EffectiveOverlayJumpDelayMs;
@@ -293,8 +294,7 @@ internal sealed partial class MainForm : Form, ISettingsHost, IInfoSource {
 
 	/// <summary>色を選ばせる。やめたら null。</summary>
 	private Color? ChooseColor( Color current ) {
-		using var dialog = new ColorDialog { Color = Color.FromArgb( 255, current ), FullOpen = true };
-		return dialog.ShowDialog( this ) == DialogResult.OK ? dialog.Color : null;
+		return ColorPicker.Choose( this, current );
 	}
 
 	private void OverallOpacityBox_ValueChanged( object? sender, EventArgs e ) {
@@ -331,6 +331,13 @@ internal sealed partial class MainForm : Form, ISettingsHost, IInfoSource {
 	private void AntiAliasCheck_CheckedChanged( object? sender, EventArgs e ) {
 		if( !loadingLayers ) {
 			config.OverlayAntiAlias = antiAliasCheck.Checked;
+			OverlaySettingsChanged();
+		}
+	}
+
+	private void DottedCheck_CheckedChanged( object? sender, EventArgs e ) {
+		if( !loadingLayers ) {
+			config.OverlayDotted = dottedCheck.Checked;
 			OverlaySettingsChanged();
 		}
 	}
@@ -930,6 +937,7 @@ internal sealed partial class MainForm : Form, ISettingsHost, IInfoSource {
 				box.Value = Math.Clamp( config.GetOverlayOpacity( key ), box.Minimum, box.Maximum );
 			}
 			antiAliasCheck.Checked = config.OverlayAntiAlias;
+			dottedCheck.Checked = config.OverlayDotted;
 			customTilesButton.Visible = config.ShowCustomTilesButton;
 			LoadCustomControls();
 			customTiles = config.ShownCustomGroups.SelectMany( group => group.ToCustomTiles( config.OverlayOpacity ) ).ToList();
@@ -1003,6 +1011,7 @@ internal sealed partial class MainForm : Form, ISettingsHost, IInfoSource {
 	private void OverlaySettingsChanged() {
 		LoadLayerSettings();
 		overlay.AntiAlias = config.OverlayAntiAlias;
+		overlay.DottedTiles = config.OverlayDotted;
 		overlay.ShowChunks = config.OverlayShowChunks;
 		Save();
 		if( ImageMode || !running ) {
