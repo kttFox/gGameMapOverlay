@@ -6,7 +6,7 @@ namespace gGameMapOverlay;
 
 /// <summary>
 /// 自分で描くマス (カスタム) を編集する、キャラクターを中央に置いた格子。
-/// 左ボタンで選んでいる形 (Shape) を描き、右ボタンで消す (押したままドラッグで続けて)。ホイールで拡大・縮小し、ホイールを押してドラッグで動かす。
+/// 左ボタンで選んでいる形 (Shape) を描き、右ボタンで消す (押したままドラッグで続けて)。ホイールで拡大・縮小し、ホイールを押して (またはスペースを押しながら左ボタンで) ドラッグで動かす。
 /// </summary>
 internal sealed class CustomTilesCanvas : Control
 {
@@ -17,9 +17,12 @@ internal sealed class CustomTilesCanvas : Control
 
     // キャラクターから上下左右それぞれに見せるマスの数 (横はマスの幅、縦はマスの高さで数える)。
     // ゲームの画面 (1920 × 1080 なら横 10.7・縦 12) が入るくらいを初期値にする。
-    private const int MinHalfTiles = 4;
-    private const int MaxHalfTiles = 30;
-    private int halfTiles = 11;
+    // ホイール 1 ノッチで ZoomStep 倍ずつ変える (大きく拡大したときも小刻みに動くように)。
+    private const double MinHalfTiles = 0.25;
+    private const double MaxHalfTiles = 30;
+    private const double ZoomStep = 1.2;
+    private const double DefaultHalfTiles = 11;
+    private double halfTiles = DefaultHalfTiles;
 
     // ホイールを押してドラッグで動かした量 (マスの幅を 1 とした画面上の量)。
     private (double X, double Y) pan;
@@ -120,7 +123,7 @@ internal sealed class CustomTilesCanvas : Control
     private IsoGrid Grid()
     {
         // 幅は左右 halfTiles マス分 (マスの幅 × 2 × halfTiles)、高さは上下 halfTiles マス分 (マスの高さ × 2 × halfTiles) が入る大きさにする。
-        var width = Math.Min(ClientSize.Width / (2.0 * halfTiles), ClientSize.Height / (double)halfTiles);
+        var width = Math.Min(ClientSize.Width / (2.0 * halfTiles), ClientSize.Height / halfTiles);
         width = Math.Max(4, width);
         // 動かした量はマスの数で持つ (拡大・縮小しても同じマスが中央付近に残るように)。
         var center = new PointF(ClientSize.Width / 2f + (float)(pan.X * width), ClientSize.Height / 2f + (float)(pan.Y * width));
@@ -201,7 +204,7 @@ internal sealed class CustomTilesCanvas : Control
     {
         base.OnMouseDown(e);
         Focus();
-        if (e.Button == MouseButtons.Middle)
+        if (e.Button == MouseButtons.Middle || (e.Button == MouseButtons.Left && IsSpaceDown()))
         {
             panFrom = e.Location;
             painting = null;
@@ -278,14 +281,37 @@ internal sealed class CustomTilesCanvas : Control
         }
     }
 
+    [System.Runtime.InteropServices.DllImport("user32.dll")]
+    private static extern short GetKeyState(int virtualKey);
+
+    // フォーカスがなくてもスペースを押しながらのドラッグで動かせるよう、キーの状態を直接見る。
+    private static bool IsSpaceDown() => GetKeyState((int)Keys.Space) < 0;
+
     protected override void OnMouseWheel(MouseEventArgs e)
     {
         base.OnMouseWheel(e);
-        var next = Math.Clamp(halfTiles - Math.Sign(e.Delta), MinHalfTiles, MaxHalfTiles);
-        if (next != halfTiles)
+        Zoom(Math.Sign(e.Delta));
+    }
+
+    public event EventHandler? ZoomChanged;
+
+    /// <summary>今の倍率 (最初の大きさを 100% とした %)。</summary>
+    public int ZoomPercent => (int)Math.Round(DefaultHalfTiles / halfTiles * 100);
+
+    /// <summary>steps 段だけ拡大する (負なら縮小)。</summary>
+    public void Zoom(int steps) => SetHalfTiles(halfTiles * Math.Pow(ZoomStep, -steps));
+
+    /// <summary>倍率を 100% に戻す。</summary>
+    public void ResetZoom() => SetHalfTiles(DefaultHalfTiles);
+
+    private void SetHalfTiles(double value)
+    {
+        value = Math.Clamp(value, MinHalfTiles, MaxHalfTiles);
+        if (value != halfTiles)
         {
-            halfTiles = next;
+            halfTiles = value;
             Invalidate();
+            ZoomChanged?.Invoke(this, EventArgs.Empty);
         }
     }
 

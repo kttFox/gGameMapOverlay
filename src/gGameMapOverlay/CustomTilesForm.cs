@@ -5,7 +5,7 @@ namespace gGameMapOverlay;
 /// <summary>
 /// 自分で描くマス (カスタム) の編集画面。グループごとに、マス・色・不透明度・表示するかを決める。
 /// マスはキャラクターのいるマスからの相対位置で、オーバーレイではプレイヤーの枠と同じく画面に固定して描く。
-/// 変更はその場で反映・保存する。開いたままゲームを操作できるよう、モードレスで表示する。
+/// グループの写し (Groups) を編集し、OK で閉じたときだけ呼び出し側が反映する (モーダルで表示する)。
 /// </summary>
 internal sealed partial class CustomTilesForm : Form {
 	// 追加したグループに順に使う色 (マップのデータの種類・プレイヤーの枠と見分けやすい色)。
@@ -19,20 +19,23 @@ internal sealed partial class CustomTilesForm : Form {
 	];
 
 	private readonly AppConfig config;
-	// config を書き換えた後に呼ぶ (保存してオーバーレイを描き直す)。
-	private readonly Action changed;
+	// 編集中のグループ (config のものの写し)。
+	private readonly List<CustomTileGroup> groups;
+	// 編集中のグループをオーバーレイに描かせる (閉じたら null で設定のグループに戻す)。
+	private readonly Action<IReadOnlyList<CustomTileGroup>?> preview;
 	// 背景に映すゲーム画面を撮る (画像と、その画面でのマスの幅)。ゲームが見つからなければ null。
 	private readonly Func<Task<(Bitmap Image, double TileWidth)?>> captureGame;
 	private bool refreshing;
 	// 背景に映すゲーム画面のメッセージ (撮れなかった理由など)。
 	private string gameStatus = "";
 
-	public CustomTilesForm( AppConfig config, Action changed, Func<Task<(Bitmap Image, double TileWidth)?>> captureGame ) {
+	public CustomTilesForm( AppConfig config, Action<IReadOnlyList<CustomTileGroup>?> preview, Func<Task<(Bitmap Image, double TileWidth)?>> captureGame ) {
 		this.config = config;
-		this.changed = changed;
+		this.preview = preview;
+		groups = config.CustomGroups.Select( group => group.Clone() ).ToList();
 		this.captureGame = captureGame;
 		InitializeComponent();
-		canvas.Groups = config.CustomGroups;
+		canvas.Groups = groups;
 		canvas.PlayerColor = Color.FromArgb( 255, config.GetPlayerColor() );
 		canvas.RequestGroup = () => AddGroup();
 		AddShapeButtons();
@@ -44,15 +47,14 @@ internal sealed partial class CustomTilesForm : Form {
 		gameCheck.Checked = config.CustomEditorShowGame;
 		refreshing = false;
 		recaptureButton.Enabled = gameCheck.Checked;
-		RefreshList( config.CustomGroups.Count > 0 ? 0 : -1 );
+		RefreshList( groups.Count > 0 ? 0 : -1 );
 	}
 
-	/// <summary>ほかの画面 (メイン画面のチェック) でグループを変えた後に呼ぶ。選んでいるグループはそのまま。</summary>
-	public void RefreshGroups() =>
-		RefreshList( Selected is { } group ? config.CustomGroups.IndexOf( group ) : -1 );
+	/// <summary>編集したグループ。OK で閉じたときに config に入れる。</summary>
+	public List<CustomTileGroup> Groups => groups;
 
 	private CustomTileGroup? Selected =>
-		groupList.SelectedIndices.Count > 0 && groupList.SelectedIndices[0] < config.CustomGroups.Count ? config.CustomGroups[groupList.SelectedIndices[0]] : null;
+		groupList.SelectedIndices.Count > 0 && groupList.SelectedIndices[0] < groups.Count ? groups[groupList.SelectedIndices[0]] : null;
 
 	/// <summary>描く形を選ぶボタン (形の見本の絵) を並べる。</summary>
 	private void AddShapeButtons() {
@@ -120,7 +122,7 @@ internal sealed partial class CustomTilesForm : Form {
 			groupList.BeginUpdate();
 			groupList.Items.Clear();
 			swatches.Images.Clear();
-			foreach( var group in config.CustomGroups ) {
+			foreach( var group in groups ) {
 				swatches.Images.Add( Swatch( group ) );
 				groupList.Items.Add( new ListViewItem( group.Name, swatches.Images.Count - 1 ) { Checked = group.Shown } );
 			}
@@ -155,8 +157,8 @@ internal sealed partial class CustomTilesForm : Form {
 			foreach( var control in new Control[] { nameBox, colorButton, opacityCheck, removeButton } ) {
 				control.Enabled = group is not null;
 			}
-			upButton.Enabled = group is not null && config.CustomGroups.IndexOf( group ) > 0;
-			downButton.Enabled = group is not null && config.CustomGroups.IndexOf( group ) < config.CustomGroups.Count - 1;
+			upButton.Enabled = group is not null && groups.IndexOf( group ) > 0;
+			downButton.Enabled = group is not null && groups.IndexOf( group ) < groups.Count - 1;
 			nameBox.Text = group?.Name ?? "";
 			colorButton.BackColor = group is null ? SystemColors.Control : Color.FromArgb( 255, group.GetColor() );
 			canvas.OverallOpacity = config.OverlayOpacity;
@@ -177,8 +179,20 @@ internal sealed partial class CustomTilesForm : Form {
 		statusLabel.Text = hover + count + gameStatus;
 	}
 
+	private void Canvas_ZoomChanged( object? sender, EventArgs e ) => zoomResetButton.Text = $"{canvas.ZoomPercent}%";
+
+	private void ZoomOutButton_Click( object? sender, EventArgs e ) => canvas.Zoom( -1 );
+
+	private void ZoomResetButton_Click( object? sender, EventArgs e ) => canvas.ResetZoom();
+
+	private void ZoomInButton_Click( object? sender, EventArgs e ) => canvas.Zoom( 1 );
+
+	/// <summary>編集中のグループをオーバーレイに描かせる。</summary>
+	private void ShowPreview() => preview( groups );
+
 	protected override void OnShown( EventArgs e ) {
 		base.OnShown( e );
+		ShowPreview();
 		if( gameCheck.Checked ) {
 			_ = CaptureGameAsync();
 		}
@@ -186,6 +200,7 @@ internal sealed partial class CustomTilesForm : Form {
 
 	protected override void OnFormClosed( FormClosedEventArgs e ) {
 		base.OnFormClosed( e );
+		preview( null );
 		canvas.SetGameImage( null, 0 );
 	}
 
@@ -216,14 +231,14 @@ internal sealed partial class CustomTilesForm : Form {
 	/// <summary>グループを末尾に足して選ぶ。</summary>
 	private CustomTileGroup AddGroup() {
 		var number = 1;
-		while( config.CustomGroups.Any( group => group.Name == $"グループ {number}" ) ) {
+		while( groups.Any( group => group.Name == $"グループ {number}" ) ) {
 			number++;
 		}
 		var added = new CustomTileGroup { Name = $"グループ {number}" };
-		added.SetColor( Palette[config.CustomGroups.Count % Palette.Length] );
-		config.CustomGroups.Add( added );
-		RefreshList( config.CustomGroups.Count - 1 );
-		changed();
+		added.SetColor( Palette[groups.Count % Palette.Length] );
+		groups.Add( added );
+		RefreshList( groups.Count - 1 );
+		ShowPreview();
 		return added;
 	}
 
@@ -231,14 +246,14 @@ internal sealed partial class CustomTilesForm : Form {
 		if( Selected is not { } group ) {
 			return;
 		}
-		var index = config.CustomGroups.IndexOf( group );
+		var index = groups.IndexOf( group );
 		var target = index + step;
-		if( target < 0 || target >= config.CustomGroups.Count ) {
+		if( target < 0 || target >= groups.Count ) {
 			return;
 		}
-		( config.CustomGroups[index], config.CustomGroups[target] ) = ( config.CustomGroups[target], config.CustomGroups[index] );
+		( groups[index], groups[target] ) = ( groups[target], groups[index] );
 		RefreshList( target );
-		changed();
+		ShowPreview();
 	}
 
 	// ---- イベントハンドラ (デザイナーから接続) ------------------------------------------
@@ -250,12 +265,12 @@ internal sealed partial class CustomTilesForm : Form {
 	}
 
 	private void GroupList_ItemChecked( object? sender, ItemCheckedEventArgs e ) {
-		if( refreshing || e.Item.Index >= config.CustomGroups.Count ) {
+		if( refreshing || e.Item.Index >= groups.Count ) {
 			return;
 		}
-		config.CustomGroups[e.Item.Index].Shown = e.Item.Checked;
+		groups[e.Item.Index].Shown = e.Item.Checked;
 		canvas.Invalidate();
-		changed();
+		ShowPreview();
 	}
 
 	private void GroupList_Resize( object? sender, EventArgs e ) =>
@@ -271,10 +286,10 @@ internal sealed partial class CustomTilesForm : Form {
 			MessageBoxButtons.OKCancel, MessageBoxIcon.Question ) != DialogResult.OK ) {
 			return;
 		}
-		var index = config.CustomGroups.IndexOf( group );
-		config.CustomGroups.RemoveAt( index );
-		RefreshList( Math.Min( index, config.CustomGroups.Count - 1 ) );
-		changed();
+		var index = groups.IndexOf( group );
+		groups.RemoveAt( index );
+		RefreshList( Math.Min( index, groups.Count - 1 ) );
+		ShowPreview();
 	}
 
 	private void UpButton_Click( object? sender, EventArgs e ) => MoveGroup( -1 );
@@ -286,9 +301,8 @@ internal sealed partial class CustomTilesForm : Form {
 			return;
 		}
 		group.Name = nameBox.Text;
-		groupList.Items[config.CustomGroups.IndexOf( group )].Text = group.Name;
+		groupList.Items[groups.IndexOf( group )].Text = group.Name;
 		ShowStatus();
-		changed();
 	}
 
 	private void ColorButton_Click( object? sender, EventArgs e ) {
@@ -300,8 +314,8 @@ internal sealed partial class CustomTilesForm : Form {
 			return;
 		}
 		group.SetColor( dialog.Color );
-		RefreshList( config.CustomGroups.IndexOf( group ) );
-		changed();
+		RefreshList( groups.IndexOf( group ) );
+		ShowPreview();
 	}
 
 	private void OpacityBox_ValueChanged( object? sender, EventArgs e ) {
@@ -312,9 +326,9 @@ internal sealed partial class CustomTilesForm : Form {
 		if( group.OwnOpacity ) {
 			group.Opacity = (int)opacityBox.Value; // チェックを入れたときは今の値 (全体の値) から始める
 		}
-		RefreshList( config.CustomGroups.IndexOf( group ) ); // 個別をやめたら全体の値を表示する
+		RefreshList( groups.IndexOf( group ) ); // 個別をやめたら全体の値を表示する
 		canvas.Invalidate();
-		changed();
+		ShowPreview();
 	}
 
 	private void ThicknessBox_SelectedIndexChanged( object? sender, EventArgs e ) {
@@ -327,19 +341,16 @@ internal sealed partial class CustomTilesForm : Form {
 
 	private void Canvas_CellsChanged( object? sender, EventArgs e ) {
 		ShowStatus();
-		changed();
+		ShowPreview();
 	}
 
 	private void Canvas_HoverChanged( object? sender, EventArgs e ) => ShowStatus();
-
-	private void CloseButton_Click( object? sender, EventArgs e ) => Close();
 
 	private void GameCheck_CheckedChanged( object? sender, EventArgs e ) {
 		if( refreshing ) {
 			return;
 		}
 		config.CustomEditorShowGame = gameCheck.Checked;
-		changed();
 		recaptureButton.Enabled = gameCheck.Checked;
 		if( gameCheck.Checked ) {
 			_ = CaptureGameAsync();

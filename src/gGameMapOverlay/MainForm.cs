@@ -37,7 +37,7 @@ internal sealed partial class MainForm : Form, ISettingsHost, IInfoSource {
 	// タスクトレイのメニューで「終了」を選んだ (常駐中でも閉じるときに隠さずに終了する)。
 	private bool exiting;
 	// タスクトレイに隠したときに開いていた設定画面・情報画面 (表示に戻すときにまた開く)。
-	private bool settingsHiddenToTray, infoHiddenToTray, customHiddenToTray;
+	private bool settingsHiddenToTray, infoHiddenToTray;
 
 	// 画像モード (デバッグ用): スクリーンショットをゲーム画面とみなして読み取る。
 	// 領域は保存しない複製の設定に持つので、ライブ用の領域設定は変わらない。
@@ -50,7 +50,6 @@ internal sealed partial class MainForm : Form, ISettingsHost, IInfoSource {
 
 	private SettingsForm? settingsForm;
 	private InfoForm? infoForm;
-	private CustomTilesForm? customForm;
 
 
 	// オーバーレイ (モンスター境界・壁)。データが読めなければ overlayData は null で、理由を overlayError に持つ。
@@ -251,9 +250,6 @@ internal sealed partial class MainForm : Form, ISettingsHost, IInfoSource {
 		}
 		config.CustomGroups[index].Shown = customControls[index].Box.Checked;
 		OverlaySettingsChanged();
-		if( customForm is { IsDisposed: false } ) { // 閉じた編集画面 (破棄済み) は更新しない
-			customForm.RefreshGroups();
-		}
 	}
 
 	private void CustomOpacityBox_ValueChanged( object? sender, EventArgs e ) {
@@ -270,9 +266,6 @@ internal sealed partial class MainForm : Form, ISettingsHost, IInfoSource {
 			group.Opacity = (int)customControls[index].Opacity.Value; // チェックを入れたときは今の値 (全体の値) から始める
 		}
 		OverlaySettingsChanged();
-		if( customForm is { IsDisposed: false } ) {
-			customForm.RefreshGroups();
-		}
 	}
 
 	private void ColorButton_Click( object? sender, EventArgs e ) {
@@ -1037,7 +1030,7 @@ internal sealed partial class MainForm : Form, ISettingsHost, IInfoSource {
 	private OverlayScene? BuildOverlayScene( Reading reading ) {
 		// ウィンドウがない・裏にある・撮影できない (画面ロック中など) ときは出さない。
 		// 座標やマップ名を読めないとき (読み取り領域がない・座標欄が黒い・OCR で読めない) は、OCR によらないものだけ描く。
-		if( !config.OverlayEnabled || reading.Status is ReadingStatus.NoWindow or ReadingStatus.Background or ReadingStatus.CaptureFailed
+		if( !( config.OverlayEnabled || customTiles.Count > 0 ) || reading.Status is ReadingStatus.NoWindow or ReadingStatus.Background or ReadingStatus.CaptureFailed
 			|| reader.FindClientRect() is not { } client ) {
 			return null;
 		}
@@ -1171,14 +1164,22 @@ internal sealed partial class MainForm : Form, ISettingsHost, IInfoSource {
 		}
 	}
 
+	/// <summary>編集中のグループ groups を、保存せずにオーバーレイに描く。null なら設定のグループに戻す。</summary>
+	private void PreviewCustomTiles( IReadOnlyList<CustomTileGroup>? groups ) {
+		customTiles = ( groups ?? config.CustomGroups ).Where( group => group.Shown && group.Cells.Count > 0 )
+			.Select( group => group.ToCustomTiles( config.OverlayOpacity ) ).ToList();
+		if( !ImageMode && running && lastLiveReading is not null ) {
+			UpdateOverlay( lastLiveReading );
+		}
+	}
+
 	/// <summary>自分で描くマス (カスタム) の編集画面を開く。</summary>
 	private void ShowCustomTiles() {
-		if( customForm is null || customForm.IsDisposed ) {
-			customForm = new CustomTilesForm( config, OverlaySettingsChanged, CaptureGameClientAsync );
-			customForm.Show( this );
-		} else {
-			customForm.Activate();
+		using var form = new CustomTilesForm( config, PreviewCustomTiles, CaptureGameClientAsync );
+		if( form.ShowDialog( this ) == DialogResult.OK ) {
+			config.CustomGroups = form.Groups;
 		}
+		OverlaySettingsChanged(); // キャンセルでも、背景にゲームを映すかは保存する
 	}
 
 	/// <summary>設定画面の位置を config に書く (保存はしない)。</summary>
@@ -1965,10 +1966,6 @@ internal sealed partial class MainForm : Form, ISettingsHost, IInfoSource {
 		}
 		settingsHiddenToTray = settingsForm is { IsDisposed: false, Visible: true };
 		infoHiddenToTray = infoForm is { IsDisposed: false, Visible: true };
-		customHiddenToTray = customForm is { IsDisposed: false, Visible: true };
-		if( customHiddenToTray ) {
-			customForm!.Hide();
-		}
 		if( settingsHiddenToTray ) {
 			RememberSettingsWindow();
 			settingsForm!.Hide();
@@ -1995,10 +1992,7 @@ internal sealed partial class MainForm : Form, ISettingsHost, IInfoSource {
 		if( infoHiddenToTray && infoForm is { IsDisposed: false } info ) {
 			info.Show( this );
 		}
-		if( customHiddenToTray && customForm is { IsDisposed: false } custom ) {
-			custom.Show( this );
-		}
-		settingsHiddenToTray = infoHiddenToTray = customHiddenToTray = false;
+		settingsHiddenToTray = infoHiddenToTray = false;
 		Activate();
 	}
 

@@ -48,6 +48,14 @@ public sealed class CustomTileGroup
     /// </summary>
     public List<int[]> Cells { get; set; } = [];
 
+    /// <summary>変えても元に影響しない写し (マスの一覧も複製する)。</summary>
+    public CustomTileGroup Clone()
+    {
+        var copy = (CustomTileGroup)MemberwiseClone();
+        copy.Cells = Cells.Select(cell => (int[])cell.Clone()).ToList();
+        return copy;
+    }
+
     /// <summary>使う不透明度 (%)。個別でなければ overallOpacity (全体の不透明度)。</summary>
     public int GetOpacity(int overallOpacity = AppConfig.DefaultOverlayOpacity) =>
         Math.Clamp(OwnOpacity ? Opacity : overallOpacity, AppConfig.MinOverlayOpacity, AppConfig.MaxOverlayOpacity);
