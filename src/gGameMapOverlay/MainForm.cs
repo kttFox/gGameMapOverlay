@@ -95,8 +95,9 @@ internal sealed partial class MainForm : Form, ISettingsHost, IInfoSource {
 	// オーバーレイに渡す、自分で描いたマス (相対位置) と色。設定を変えたときだけ作り直す
 	// (同じ中身でも作り直すと OverlayScene が別物とみなされるので、読み取りごとには作らない)。
 	private IReadOnlyList<CustomTiles> customTiles = [];
-	// カスタムのグループごとの、色の見本と表示を切り替えるチェックボックス (グリッド・プレイヤーの下に並べる。グループの数が変わったら作り直す)。
-	private readonly List<(CheckBox Box, Panel Swatch)> customControls = [];
+	// カスタムのグループごとの、色の見本・表示を切り替えるチェックボックス・不透明度 (個別にするチェックボックスと値と単位)。
+	// グリッド・プレイヤーの下に並べる。グループの数が変わったら作り直す。
+	private readonly List<(CheckBox Box, Panel Swatch, CheckBox Own, NumericUpDown Opacity, Label Unit)> customControls = [];
 	private const int CustomFirstRow = 7;
 
 	// 前面のウィンドウが変わったら、次の読み取りを待たずにオーバーレイを隠す・出し直す。
@@ -251,6 +252,25 @@ internal sealed partial class MainForm : Form, ISettingsHost, IInfoSource {
 		config.CustomGroups[index].Shown = customControls[index].Box.Checked;
 		OverlaySettingsChanged();
 		if( customForm is { IsDisposed: false } ) { // 閉じた編集画面 (破棄済み) は更新しない
+			customForm.RefreshGroups();
+		}
+	}
+
+	private void CustomOpacityBox_ValueChanged( object? sender, EventArgs e ) {
+		if( loadingLayers ) {
+			return;
+		}
+		var index = customControls.FindIndex( controls => controls.Opacity == sender || controls.Own == sender );
+		if( index < 0 || index >= config.CustomGroups.Count ) {
+			return;
+		}
+		var group = config.CustomGroups[index];
+		group.OwnOpacity = customControls[index].Own.Checked;
+		if( group.OwnOpacity ) {
+			group.Opacity = (int)customControls[index].Opacity.Value; // チェックを入れたときは今の値 (全体の値) から始める
+		}
+		OverlaySettingsChanged();
+		if( customForm is { IsDisposed: false } ) {
 			customForm.RefreshGroups();
 		}
 	}
@@ -902,7 +922,7 @@ internal sealed partial class MainForm : Form, ISettingsHost, IInfoSource {
 			antiAliasCheck.Checked = config.OverlayAntiAlias;
 			customTilesButton.Visible = config.ShowCustomTilesButton;
 			LoadCustomControls();
-			customTiles = config.ShownCustomGroups.Select( group => group.ToCustomTiles() ).ToList();
+			customTiles = config.ShownCustomGroups.Select( group => group.ToCustomTiles( config.OverlayOpacity ) ).ToList();
 		} finally {
 			loadingLayers = false;
 		}
@@ -913,31 +933,50 @@ internal sealed partial class MainForm : Form, ISettingsHost, IInfoSource {
 		var groups = config.CustomGroups;
 		if( customControls.Count != groups.Count ) {
 			layersPanel.SuspendLayout();
-			foreach( var (box, swatch) in customControls ) {
-				layersPanel.Controls.Remove( box );
-				layersPanel.Controls.Remove( swatch );
-				box.Dispose();
-				swatch.Dispose();
+			foreach( var controls in customControls ) {
+				foreach( var control in new Control[] { controls.Box, controls.Swatch, controls.Own, controls.Opacity, controls.Unit } ) {
+					layersPanel.Controls.Remove( control );
+					control.Dispose();
+				}
 			}
 			customControls.Clear();
 			layersPanel.RowCount = Math.Max( layersPanel.RowCount, CustomFirstRow + groups.Count );
 			while( layersPanel.RowStyles.Count < layersPanel.RowCount ) {
 				layersPanel.RowStyles.Add( new RowStyle() );
 			}
+			for( var row = CustomFirstRow; row < layersPanel.RowStyles.Count; row++ ) {
+				layersPanel.RowStyles[row] = new RowStyle(); // デザイナーの余りの行 (高さ固定) だとカスタムの行が詰まるので、中身に合わせる
+			}
 			for( var i = 0; i < groups.Count; i++ ) {
 				// 大きさと余白は、DPI に合わせて拡大済みのグリッドの見本・チェックボックスに揃える。
 				// 色はカスタムのマスの編集画面で変えるので、見本はボタンにしない。
 				var swatch = new Panel { Anchor = AnchorStyles.Left, BorderStyle = BorderStyle.FixedSingle, Size = gridSwatch.Size, Margin = gridSwatch.Margin };
 				var box = new CheckBox { Anchor = AnchorStyles.Left, AutoSize = true, Margin = gridBox.Margin, UseVisualStyleBackColor = true };
+				var opacity = new NumericUpDown {
+					Anchor = AnchorStyles.Left, Size = gridOpacityBox.Size, Margin = gridOpacityBox.Margin, TextAlign = HorizontalAlignment.Right,
+					Increment = gridOpacityBox.Increment, Minimum = AppConfig.MinOverlayOpacity, Maximum = AppConfig.MaxOverlayOpacity,
+				};
+				var own = new CheckBox { Anchor = AnchorStyles.Left, AutoSize = true, Margin = gridOpacityCheck.Margin, UseVisualStyleBackColor = true };
+				var unit = new Label { Anchor = AnchorStyles.Left, AutoSize = true, Margin = gridOpacityUnit.Margin, Text = gridOpacityUnit.Text };
+				toolTip.SetToolTip( opacity, "この色の不透明度" );
+				toolTip.SetToolTip( own, toolTip.GetToolTip( gridOpacityCheck ) );
 				box.CheckedChanged += CustomBox_CheckedChanged;
+				own.CheckedChanged += CustomOpacityBox_ValueChanged;
+				opacity.ValueChanged += CustomOpacityBox_ValueChanged;
 				layersPanel.Controls.Add( box, 0, CustomFirstRow + i );
 				layersPanel.Controls.Add( swatch, 1, CustomFirstRow + i );
-				customControls.Add( (box, swatch) );
+				layersPanel.Controls.Add( own, 2, CustomFirstRow + i );
+				layersPanel.Controls.Add( opacity, 3, CustomFirstRow + i );
+				layersPanel.Controls.Add( unit, 4, CustomFirstRow + i );
+				customControls.Add( (box, swatch, own, opacity, unit) );
 			}
 			layersPanel.ResumeLayout( true );
 		}
 		for( var i = 0; i < groups.Count; i++ ) {
-			var (box, swatch) = customControls[i];
+			var (box, swatch, own, opacity, _) = customControls[i];
+			own.Checked = groups[i].OwnOpacity;
+			opacity.Enabled = own.Checked;
+			opacity.Value = Math.Clamp( groups[i].GetOpacity( config.OverlayOpacity ), opacity.Minimum, opacity.Maximum );
 			swatch.BackColor = Color.FromArgb( 255, groups[i].GetColor() ); // 見本は不透明で見せる
 			box.Text = groups[i].Name.Length > 0 ? groups[i].Name : "(名前なし)";
 			box.Checked = groups[i].Shown;

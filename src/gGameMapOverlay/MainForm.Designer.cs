@@ -385,7 +385,8 @@ partial class MainForm
 		// 
 		this.overallOpacityUnit.Anchor = AnchorStyles.Left;
 		this.overallOpacityUnit.AutoSize = true;
-		this.overallOpacityUnit.Location = new Point( 200, 5 );
+		this.overallOpacityUnit.Location = new Point( 197, 5 );
+		this.overallOpacityUnit.Margin = new Padding( 0, 0, 3, 0 );
 		this.overallOpacityUnit.Name = "overallOpacityUnit";
 		this.overallOpacityUnit.Size = new Size( 17, 15 );
 		this.overallOpacityUnit.TabIndex = 1;
@@ -464,7 +465,8 @@ partial class MainForm
 		// 
 		this.impassableEdgeOpacityUnit.Anchor = AnchorStyles.Left;
 		this.impassableEdgeOpacityUnit.AutoSize = true;
-		this.impassableEdgeOpacityUnit.Location = new Point( 200, 30 );
+		this.impassableEdgeOpacityUnit.Location = new Point( 197, 30 );
+		this.impassableEdgeOpacityUnit.Margin = new Padding( 0, 0, 3, 0 );
 		this.impassableEdgeOpacityUnit.Name = "impassableEdgeOpacityUnit";
 		this.impassableEdgeOpacityUnit.Size = new Size( 17, 15 );
 		this.impassableEdgeOpacityUnit.TabIndex = 5;
@@ -529,7 +531,8 @@ partial class MainForm
 		// 
 		this.monsterBlockOpacityUnit.Anchor = AnchorStyles.Left;
 		this.monsterBlockOpacityUnit.AutoSize = true;
-		this.monsterBlockOpacityUnit.Location = new Point( 200, 55 );
+		this.monsterBlockOpacityUnit.Location = new Point( 197, 55 );
+		this.monsterBlockOpacityUnit.Margin = new Padding( 0, 0, 3, 0 );
 		this.monsterBlockOpacityUnit.Name = "monsterBlockOpacityUnit";
 		this.monsterBlockOpacityUnit.Size = new Size( 17, 15 );
 		this.monsterBlockOpacityUnit.TabIndex = 9;
@@ -594,6 +597,7 @@ partial class MainForm
 		// 
 		this.mapMoveOpacityUnit.Anchor = AnchorStyles.Left;
 		this.mapMoveOpacityUnit.AutoSize = true;
+		this.mapMoveOpacityUnit.Margin = new Padding( 0, 0, 3, 0 );
 		this.mapMoveOpacityUnit.Location = new Point( 200, 80 );
 		this.mapMoveOpacityUnit.Name = "mapMoveOpacityUnit";
 		this.mapMoveOpacityUnit.Size = new Size( 17, 15 );
@@ -659,6 +663,7 @@ partial class MainForm
 		// 
 		this.specialOpacityUnit.Anchor = AnchorStyles.Left;
 		this.specialOpacityUnit.AutoSize = true;
+		this.specialOpacityUnit.Margin = new Padding( 0, 0, 3, 0 );
 		this.specialOpacityUnit.Location = new Point( 200, 105 );
 		this.specialOpacityUnit.Name = "specialOpacityUnit";
 		this.specialOpacityUnit.Size = new Size( 17, 15 );
@@ -724,6 +729,7 @@ partial class MainForm
 		// 
 		this.gridOpacityUnit.Anchor = AnchorStyles.Left;
 		this.gridOpacityUnit.AutoSize = true;
+		this.gridOpacityUnit.Margin = new Padding( 0, 0, 3, 0 );
 		this.gridOpacityUnit.Location = new Point( 200, 130 );
 		this.gridOpacityUnit.Name = "gridOpacityUnit";
 		this.gridOpacityUnit.Size = new Size( 17, 15 );
@@ -789,6 +795,7 @@ partial class MainForm
 		// 
 		this.playerOpacityUnit.Anchor = AnchorStyles.Left;
 		this.playerOpacityUnit.AutoSize = true;
+		this.playerOpacityUnit.Margin = new Padding( 0, 0, 3, 0 );
 		this.playerOpacityUnit.Location = new Point( 200, 155 );
 		this.playerOpacityUnit.Name = "playerOpacityUnit";
 		this.playerOpacityUnit.Size = new Size( 17, 15 );

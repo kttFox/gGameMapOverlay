@@ -100,6 +100,10 @@ internal sealed class CustomTilesCanvas : Control
     [System.ComponentModel.DesignerSerializationVisibility(System.ComponentModel.DesignerSerializationVisibility.Hidden)]
     public Color PlayerColor { get; set; } = AppConfig.DefaultPlayerColor;
 
+    /// <summary>全体の不透明度 (個別の不透明度でないグループに使う)。</summary>
+    [System.ComponentModel.DesignerSerializationVisibility(System.ComponentModel.DesignerSerializationVisibility.Hidden)]
+    public int OverallOpacity { get; set; } = AppConfig.DefaultOverlayOpacity;
+
     /// <summary>グループがないときに描こうとしたら呼ぶ。作ったグループを返す。</summary>
     [System.ComponentModel.DesignerSerializationVisibility(System.ComponentModel.DesignerSerializationVisibility.Hidden)]
     public Func<CustomTileGroup?>? RequestGroup { get; set; }
@@ -161,7 +165,7 @@ internal sealed class CustomTilesCanvas : Control
                 layerGraphics.SmoothingMode = SmoothingMode.AntiAlias;
                 foreach (var group in Groups.Where(group => group.Shown || group == Selected))
                 {
-                    OverlayForm.DrawCustomTiles(layerGraphics, grid, group.ToCustomTiles(), visible);
+                    OverlayForm.DrawCustomTiles(layerGraphics, grid, group.ToCustomTiles(OverallOpacity), visible);
                 }
                 if (hover is { } target && panFrom is null)
                 {

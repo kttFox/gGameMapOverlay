@@ -353,6 +353,8 @@ public class OverlayConfigTests
     {
         var group = new CustomTileGroup { Color = "#102030", Opacity = 40 };
         Assert.Equal(Color.FromArgb(102, 0x10, 0x20, 0x30), group.GetColor());
+        group.OwnOpacity = false;
+        Assert.Equal(204, group.GetColor(80).A); // 個別でなければ全体の不透明度
         group.Color = "bad";
         Assert.Equal(CustomTileGroup.DefaultColor.ToArgb() & 0xFFFFFF, group.GetColor().ToArgb() & 0xFFFFFF);
     }

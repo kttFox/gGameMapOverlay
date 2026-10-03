@@ -45,6 +45,8 @@ partial class CustomTilesForm
 		this.colorCaption = new Label();
 		this.colorButton = new Button();
 		this.opacityCaption = new Label();
+		this.opacityPanel = new FlowLayoutPanel();
+		this.opacityCheck = new CheckBox();
 		this.opacityBox = new NumericUpDown();
 		this.opacityUnit = new Label();
 		this.shapeCaption = new Label();
@@ -52,7 +54,6 @@ partial class CustomTilesForm
 		this.thicknessPanel = new FlowLayoutPanel();
 		this.thicknessCaption = new Label();
 		this.thicknessBox = new ComboBox();
-		this.clearButton = new Button();
 		this.helpLabel = new Label();
 		this.canvas = new CustomTilesCanvas();
 		this.bottomPanel = new TableLayoutPanel();
@@ -65,6 +66,7 @@ partial class CustomTilesForm
 		this.sidePanel.SuspendLayout();
 		this.groupButtons.SuspendLayout();
 		this.propertyPanel.SuspendLayout();
+		this.opacityPanel.SuspendLayout();
 		this.thicknessPanel.SuspendLayout();
 		( (System.ComponentModel.ISupportInitialize)this.opacityBox ).BeginInit();
 		this.bottomPanel.SuspendLayout();
@@ -100,16 +102,14 @@ partial class CustomTilesForm
 		this.sidePanel.Controls.Add( this.shapeCaption, 0, 4 );
 		this.sidePanel.Controls.Add( this.shapePanel, 0, 5 );
 		this.sidePanel.Controls.Add( this.thicknessPanel, 0, 6 );
-		this.sidePanel.Controls.Add( this.clearButton, 0, 7 );
-		this.sidePanel.Controls.Add( this.helpLabel, 0, 8 );
+		this.sidePanel.Controls.Add( this.helpLabel, 0, 7 );
 		this.sidePanel.Dock = DockStyle.Fill;
 		this.sidePanel.Location = new Point( 9, 9 );
 		this.sidePanel.Margin = new Padding( 3, 3, 9, 3 );
 		this.sidePanel.Name = "sidePanel";
-		this.sidePanel.RowCount = 9;
+		this.sidePanel.RowCount = 8;
 		this.sidePanel.RowStyles.Add( new RowStyle() );
 		this.sidePanel.RowStyles.Add( new RowStyle( SizeType.Percent, 100F ) );
-		this.sidePanel.RowStyles.Add( new RowStyle() );
 		this.sidePanel.RowStyles.Add( new RowStyle() );
 		this.sidePanel.RowStyles.Add( new RowStyle() );
 		this.sidePanel.RowStyles.Add( new RowStyle() );
@@ -229,8 +229,7 @@ partial class CustomTilesForm
 		this.propertyPanel.Controls.Add( this.colorCaption, 0, 1 );
 		this.propertyPanel.Controls.Add( this.colorButton, 1, 1 );
 		this.propertyPanel.Controls.Add( this.opacityCaption, 0, 2 );
-		this.propertyPanel.Controls.Add( this.opacityBox, 1, 2 );
-		this.propertyPanel.Controls.Add( this.opacityUnit, 2, 2 );
+		this.propertyPanel.Controls.Add( this.opacityPanel, 1, 2 );
 		this.propertyPanel.Location = new Point( 0, 353 );
 		this.propertyPanel.Margin = new Padding( 0, 6, 0, 0 );
 		this.propertyPanel.Name = "propertyPanel";
@@ -238,6 +237,7 @@ partial class CustomTilesForm
 		this.propertyPanel.RowStyles.Add( new RowStyle() );
 		this.propertyPanel.RowStyles.Add( new RowStyle() );
 		this.propertyPanel.RowStyles.Add( new RowStyle() );
+		this.propertyPanel.SetColumnSpan( this.opacityPanel, 2 );
 		this.propertyPanel.Size = new Size( 220, 87 );
 		this.propertyPanel.TabIndex = 3;
 		// 
@@ -292,24 +292,51 @@ partial class CustomTilesForm
 		this.opacityCaption.TabIndex = 4;
 		this.opacityCaption.Text = "不透明度";
 		// 
+		// opacityPanel
+		// 
+		this.opacityPanel.Anchor = AnchorStyles.Left;
+		this.opacityPanel.AutoSize = true;
+		this.opacityPanel.AutoSizeMode = AutoSizeMode.GrowAndShrink;
+		this.opacityPanel.Controls.Add( this.opacityCheck );
+		this.opacityPanel.Controls.Add( this.opacityBox );
+		this.opacityPanel.Controls.Add( this.opacityUnit );
+		this.opacityPanel.Location = new Point( 61, 58 );
+		this.opacityPanel.Margin = new Padding( 0 );
+		this.opacityPanel.Name = "opacityPanel";
+		this.opacityPanel.Size = new Size( 120, 29 );
+		this.opacityPanel.TabIndex = 5;
+		this.opacityPanel.WrapContents = false;
+		// 
+		// opacityCheck
+		// 
+		this.opacityCheck.Anchor = AnchorStyles.Left;
+		this.opacityCheck.AutoSize = true;
+		this.opacityCheck.Location = new Point( 3, 7 );
+		this.opacityCheck.Name = "opacityCheck";
+		this.opacityCheck.Size = new Size( 15, 14 );
+		this.opacityCheck.TabIndex = 0;
+		this.opacityCheck.UseVisualStyleBackColor = true;
+		this.opacityCheck.CheckedChanged +=  this.OpacityBox_ValueChanged ;
+		// 
 		// opacityBox
 		// 
 		this.opacityBox.Anchor = AnchorStyles.Left;
-		this.opacityBox.Location = new Point( 64, 61 );
+		this.opacityBox.Location = new Point( 24, 3 );
 		this.opacityBox.Minimum = new decimal( new int[] { 10, 0, 0, 0 } );
 		this.opacityBox.Name = "opacityBox";
 		this.opacityBox.Size = new Size( 60, 23 );
-		this.opacityBox.TabIndex = 5;
+		this.opacityBox.TabIndex = 1;
 		this.opacityBox.ValueChanged +=  this.OpacityBox_ValueChanged ;
 		// 
 		// opacityUnit
 		// 
 		this.opacityUnit.Anchor = AnchorStyles.Left;
 		this.opacityUnit.AutoSize = true;
-		this.opacityUnit.Location = new Point( 130, 65 );
+		this.opacityUnit.Location = new Point( 87, 7 );
+		this.opacityUnit.Margin = new Padding( 0, 0, 3, 0 );
 		this.opacityUnit.Name = "opacityUnit";
 		this.opacityUnit.Size = new Size( 17, 15 );
-		this.opacityUnit.TabIndex = 6;
+		this.opacityUnit.TabIndex = 2;
 		this.opacityUnit.Text = "%";
 		// 
 		// shapeCaption
@@ -361,17 +388,6 @@ partial class CustomTilesForm
 		this.thicknessBox.Size = new Size( 79, 23 );
 		this.thicknessBox.TabIndex = 1;
 		this.thicknessBox.SelectedIndexChanged +=  this.ThicknessBox_SelectedIndexChanged ;
-		// 
-		// clearButton
-		// 
-		this.clearButton.AutoSize = true;
-		this.clearButton.Location = new Point( 3, 467 );
-		this.clearButton.Name = "clearButton";
-		this.clearButton.Size = new Size( 120, 25 );
-		this.clearButton.TabIndex = 4;
-		this.clearButton.Text = "マスを全部消す...";
-		this.clearButton.UseVisualStyleBackColor = true;
-		this.clearButton.Click +=  this.ClearButton_Click ;
 		// 
 		// helpLabel
 		// 
@@ -488,6 +504,8 @@ partial class CustomTilesForm
 		this.groupButtons.PerformLayout();
 		this.propertyPanel.ResumeLayout( false );
 		this.propertyPanel.PerformLayout();
+		this.opacityPanel.ResumeLayout( false );
+		this.opacityPanel.PerformLayout();
 		this.thicknessPanel.ResumeLayout( false );
 		this.thicknessPanel.PerformLayout();
 		( (System.ComponentModel.ISupportInitialize)this.opacityBox ).EndInit();
@@ -515,6 +533,8 @@ partial class CustomTilesForm
 	private Label colorCaption;
 	private Button colorButton;
 	private Label opacityCaption;
+	private FlowLayoutPanel opacityPanel;
+	private CheckBox opacityCheck;
 	private NumericUpDown opacityBox;
 	private Label opacityUnit;
 	private Label shapeCaption;
@@ -523,7 +543,6 @@ partial class CustomTilesForm
 	private Label thicknessCaption;
 	private ComboBox thicknessBox;
 	private ToolTip shapeTip;
-	private Button clearButton;
 	private Label helpLabel;
 	private CustomTilesCanvas canvas;
 	private TableLayoutPanel bottomPanel;

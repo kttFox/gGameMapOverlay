@@ -152,14 +152,17 @@ internal sealed partial class CustomTilesForm : Form {
 		var group = Selected;
 		refreshing = true;
 		try {
-			foreach( var control in new Control[] { nameBox, colorButton, opacityBox, removeButton, clearButton } ) {
+			foreach( var control in new Control[] { nameBox, colorButton, opacityCheck, removeButton } ) {
 				control.Enabled = group is not null;
 			}
 			upButton.Enabled = group is not null && config.CustomGroups.IndexOf( group ) > 0;
 			downButton.Enabled = group is not null && config.CustomGroups.IndexOf( group ) < config.CustomGroups.Count - 1;
 			nameBox.Text = group?.Name ?? "";
 			colorButton.BackColor = group is null ? SystemColors.Control : Color.FromArgb( 255, group.GetColor() );
-			opacityBox.Value = Math.Clamp( group?.Opacity ?? AppConfig.DefaultOverlayOpacity, opacityBox.Minimum, opacityBox.Maximum );
+			canvas.OverallOpacity = config.OverlayOpacity;
+			opacityCheck.Checked = group?.OwnOpacity ?? false;
+			opacityBox.Enabled = group is { OwnOpacity: true }; // 個別でなければ全体の不透明度を (変えられない状態で) 表示する
+			opacityBox.Value = Math.Clamp( group?.GetOpacity( config.OverlayOpacity ) ?? AppConfig.DefaultOverlayOpacity, opacityBox.Minimum, opacityBox.Maximum );
 		} finally {
 			refreshing = false;
 		}
@@ -305,7 +308,11 @@ internal sealed partial class CustomTilesForm : Form {
 		if( refreshing || Selected is not { } group ) {
 			return;
 		}
-		group.Opacity = (int)opacityBox.Value;
+		group.OwnOpacity = opacityCheck.Checked;
+		if( group.OwnOpacity ) {
+			group.Opacity = (int)opacityBox.Value; // チェックを入れたときは今の値 (全体の値) から始める
+		}
+		RefreshList( config.CustomGroups.IndexOf( group ) ); // 個別をやめたら全体の値を表示する
 		canvas.Invalidate();
 		changed();
 	}
@@ -316,20 +323,6 @@ internal sealed partial class CustomTilesForm : Form {
 		}
 		canvas.Thickness = CustomTileShape.MinThickness + thicknessBox.SelectedIndex;
 		RefreshShapeImages();
-	}
-
-	private void ClearButton_Click( object? sender, EventArgs e ) {
-		if( Selected is not { } group || group.Cells.Count == 0 ) {
-			return;
-		}
-		if( MessageBox.Show( this, $"「{group.Name}」のマスを全部消しますか? ({group.Cells.Count} マス)", Text,
-			MessageBoxButtons.OKCancel, MessageBoxIcon.Question ) != DialogResult.OK ) {
-			return;
-		}
-		group.Cells.Clear();
-		canvas.Invalidate();
-		ShowStatus();
-		changed();
 	}
 
 	private void Canvas_CellsChanged( object? sender, EventArgs e ) {

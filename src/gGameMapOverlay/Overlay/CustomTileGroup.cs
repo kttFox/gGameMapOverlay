@@ -33,8 +33,11 @@ public sealed class CustomTileGroup
     /// <summary>"#RRGGBB"。読めない値なら DefaultColor。</summary>
     public string Color { get; set; } = ToHtml(DefaultColor);
 
-    /// <summary>不透明度 (%)。AppConfig.MinOverlayOpacity〜MaxOverlayOpacity。</summary>
+    /// <summary>不透明度 (%)。AppConfig.MinOverlayOpacity〜MaxOverlayOpacity。OwnOpacity のときだけ使う。</summary>
     public int Opacity { get; set; } = AppConfig.DefaultOverlayOpacity;
+
+    /// <summary>個別の不透明度 (Opacity) を使う。false なら全体の不透明度 (AppConfig.OverlayOpacity) を使う。</summary>
+    public bool OwnOpacity { get; set; } = true;
 
     public bool Shown { get; set; } = true;
 
@@ -45,8 +48,12 @@ public sealed class CustomTileGroup
     /// </summary>
     public List<int[]> Cells { get; set; } = [];
 
-    /// <summary>色 (アルファは不透明度から決める)。</summary>
-    public DrawingColor GetColor()
+    /// <summary>使う不透明度 (%)。個別でなければ overallOpacity (全体の不透明度)。</summary>
+    public int GetOpacity(int overallOpacity = AppConfig.DefaultOverlayOpacity) =>
+        Math.Clamp(OwnOpacity ? Opacity : overallOpacity, AppConfig.MinOverlayOpacity, AppConfig.MaxOverlayOpacity);
+
+    /// <summary>色 (アルファは不透明度 (GetOpacity) から決める)。</summary>
+    public DrawingColor GetColor(int overallOpacity = AppConfig.DefaultOverlayOpacity)
     {
         var color = DefaultColor;
         try
@@ -57,7 +64,7 @@ public sealed class CustomTileGroup
         {
             // 読めない値は初期値のまま
         }
-        var alpha = (int)Math.Round(255 * Math.Clamp(Opacity, AppConfig.MinOverlayOpacity, AppConfig.MaxOverlayOpacity) / 100.0);
+        var alpha = (int)Math.Round(255 * GetOpacity(overallOpacity) / 100.0);
         return DrawingColor.FromArgb(alpha, color.R, color.G, color.B);
     }
 
@@ -132,10 +139,10 @@ public sealed class CustomTileGroup
     };
 
     /// <summary>オーバーレイに渡す形。</summary>
-    public CustomTiles ToCustomTiles()
+    public CustomTiles ToCustomTiles(int overallOpacity = AppConfig.DefaultOverlayOpacity)
     {
         var division = FillDivision();
-        return new(ToTileRects(division), ToFrameRects(), GetColor(), division);
+        return new(ToTileRects(division), ToFrameRects(), GetColor(overallOpacity), division);
     }
 
     /// <summary>
