@@ -27,11 +27,8 @@ public static class GameUi
         (Anchor.TopLeft, 0, 0, 365, 25),          // マップ名欄
         (Anchor.TopLeft, 0, 25, 160, 50),         // 座標欄
         (Anchor.TopLeft, 0, 50, 82, 352),         // INFO・SKILL 欄
-        (Anchor.BottomCenter, -454, -69, -288, 0),  // バージョン・パーティ・スキル
-        (Anchor.BottomCenter, -288, -114, -251, 0), // V・Z・X のボタン
-        (Anchor.BottomCenter, -261, -146, 261, 0),  // チャット欄とタブ
-        (Anchor.BottomCenter, 253, -114, 290, 0),   // チャット欄の右のボタン
-        (Anchor.BottomCenter, 290, -98, 528, 0),    // 右下 (所持数・アイテム箱など)
+        (Anchor.BottomCenter, -290, -157, 414, 0),  // チャット欄・タブ・手紙・左右のボタン・右上の装備の欄 (届いた手紙の数の吹き出しは含めない)
+        (Anchor.BottomCenter, -456, -74, 456, 0),   // 下の段 (バージョン・パーティ・スキル・アイテム箱など)
     ];
 
     // オーバーレイだけ描かない範囲 (上を右クリックすると歩くので Contains には含めない)。

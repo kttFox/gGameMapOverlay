@@ -72,3 +72,9 @@ internal static class Program
         return index >= 0 && index + 1 < args.Length ? args[index + 1] : null;
     }
 }
+
+public class Form : System.Windows.Forms.Form {
+	public Form() {
+		this.Icon = Properties.Resources.AppIcon;
+	}
+}

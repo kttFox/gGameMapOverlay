@@ -205,7 +205,7 @@ public sealed class AppConfig
     /// <summary>設定画面で詳細設定 (処理・マップ名) を表示する。</summary>
     public bool ShowAdvancedSettings { get; set; }
 
-    /// <summary>メイン画面にカスタムのマスの編集ボタンを出す (タイトルバーのアイコンの右クリックメニューで切り替える)。</summary>
+    /// <summary>メイン画面にカスタムのマスの編集ボタンを出す (マップのマスのボタンは常に出す) (タイトルバーのアイコンの右クリックメニューで切り替える)。</summary>
     public bool ShowCustomTilesButton { get; set; }
 
     /// <summary>
@@ -230,11 +230,26 @@ public sealed class AppConfig
     [JsonIgnore]
     public IEnumerable<CustomTileGroup> ShownCustomGroups => CustomGroups.Where(group => group.Shown && group.CellCount > 0);
 
+    /// <summary>マップに固定した自分で描いたマスのグループ (CustomTileGroup.MapName のマップにいるときだけ描く)。</summary>
+    public List<CustomTileGroup> MapCustomGroups { get; set; } = [];
+
     /// <summary>カスタムの編集画面で、背景にゲーム画面を映す。</summary>
     public bool CustomEditorShowGame { get; set; }
 
+    /// <summary>カスタムの編集画面の位置・大きさ (最大化していたときは元の大きさ)。null なら画面の中央に既定の大きさで出す。</summary>
+    public int? CustomEditorWindowX { get; set; }
+    public int? CustomEditorWindowY { get; set; }
+    public int? CustomEditorWindowWidth { get; set; }
+    public int? CustomEditorWindowHeight { get; set; }
+
+    /// <summary>カスタムの編集画面を最大化していたか。</summary>
+    public bool CustomEditorMaximized { get; set; }
+
+    /// <summary>カスタムの編集画面の、グループとレイヤーの間のスプリッターの位置。null なら既定の位置。</summary>
+    public int? CustomEditorSplitterDistance { get; set; }
+
     [JsonIgnore]
-    public bool OverlayEnabled => ShowGrid || ShowPlayer || ShownCustomGroups.Any() || OverlayLayer.All.Any(IsOverlayLayerShown);
+    public bool OverlayEnabled => ShowGrid || ShowPlayer || ShownCustomGroups.Any() || MapCustomGroups.Any(group => group.Shown && group.CellCount > 0) || OverlayLayer.All.Any(IsOverlayLayerShown);
 
     /// <summary>オーバーレイの色 (OverlayLayer.Key → "#RRGGBB")。書いていない種類は OverlayLayer.DefaultColor。</summary>
     public Dictionary<string, string> OverlayColors { get; set; } = [];
@@ -312,8 +327,11 @@ public sealed class AppConfig
     /// <summary>オーバーレイにアンチエイリアスをかけるか。</summary>
     public bool OverlayAntiAlias { get; set; } = true;
 
-    /// <summary>地形のマスを 1 画素おきのドットで塗るか (自分で描いたマスはレイヤーごとに持つ)。</summary>
+    /// <summary>地形のマスを 1 画素おきのドットで塗るか (自分で描いたマスはペンごとに持つ)。</summary>
     public bool OverlayDotted { get; set; }
+
+    /// <summary>地形のマスの縁 (輪郭線) を描くか (自分で描いたマスはペンごとに持つ)。</summary>
+    public bool OverlayOutlined { get; set; } = true;
 
     /// <summary>地形の画像のチャンクの境目と番号をオーバーレイに描くか (確かめる用)。</summary>
     public bool OverlayShowChunks { get; set; }
@@ -412,10 +430,14 @@ public sealed class AppConfig
         config.MoveSkillTileMs = Math.Clamp(config.MoveSkillTileMs, 10, 1000);
         config.MoveKeyDirections ??= [];
         config.CustomGroups = (config.CustomGroups ?? []).OfType<CustomTileGroup>().ToList();
-        foreach (var group in config.CustomGroups)
+        config.MapCustomGroups = (config.MapCustomGroups ?? []).OfType<CustomTileGroup>().ToList();
+        foreach (var group in config.CustomGroups.Concat(config.MapCustomGroups))
         {
             group.Normalize();
         }
+        // マップに固定したグループは MapCustomGroups に、キャラクターに付いていくグループは CustomGroups に置く。
+        config.MapCustomGroups = [.. config.MapCustomGroups.Where(group => group.OnMap), .. config.CustomGroups.Where(group => group.OnMap)];
+        config.CustomGroups.RemoveAll(group => group.OnMap);
         if (config.OcrThreads is { } threads)
         {
             config.OcrThreads = Math.Clamp(threads, 1, MaxOcrThreads);

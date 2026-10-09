@@ -6,7 +6,7 @@ namespace gGameMapOverlay;
 
 /// <summary>
 /// 自分で描くマス (カスタム) を編集する、キャラクターを中央に置いた格子。
-/// 左ボタンで選んでいる形 (Shape) を描き、右ボタンで消す (押したままドラッグで続けて)。ホイールで拡大・縮小し、ホイールを押してドラッグするか、スペースを押しながらマウスを動かして動かす。
+/// 左ボタンで選んでいる形 (Shape) を描き、右ボタンで消す (押したままドラッグで続けて)。Alt + 左・右ボタンでマスのレイヤーを選ぶ (スポイト)。ホイールで拡大・縮小し、ホイールを押してドラッグするか、スペースを押しながらマウスを動かして動かす。
 /// </summary>
 internal sealed class CustomTilesCanvas : Control
 {
@@ -48,9 +48,17 @@ internal sealed class CustomTilesCanvas : Control
     [System.ComponentModel.DesignerSerializationVisibility(System.ComponentModel.DesignerSerializationVisibility.Hidden)]
     public CustomTileGroup? SelectedGroup { get; set; }
 
-    /// <summary>描く・消す対象のレイヤー (SelectedGroup の中の 1 つ)。null なら描こうとしたときに RequestLayer で作ってもらう。</summary>
+    /// <summary>格子に描くグループを絞る (null ならすべて)。選んでいるグループも、これに合わなければ描かない。</summary>
     [System.ComponentModel.DesignerSerializationVisibility(System.ComponentModel.DesignerSerializationVisibility.Hidden)]
-    public CustomTileLayer? Selected { get; set; }
+    public Func<CustomTileGroup, bool>? GroupFilter { get; set; }
+
+    /// <summary>描くレイヤー (選んでいるグループの Layers の番号)。描いたマスはこのレイヤーに入る。</summary>
+    [System.ComponentModel.DesignerSerializationVisibility(System.ComponentModel.DesignerSerializationVisibility.Hidden)]
+    public int Layer { get; set; }
+
+    /// <summary>選んでいるグループの、描くレイヤー (なければ初期値)。</summary>
+    private CustomTileLayer CurrentLayer =>
+        SelectedGroup is { } group && Layer >= 0 && Layer < group.Layers.Count ? group.Layers[Layer] : new();
 
     private Bitmap? gameImage;
     private double gameTileWidth;
@@ -113,12 +121,15 @@ internal sealed class CustomTilesCanvas : Control
     [System.ComponentModel.DesignerSerializationVisibility(System.ComponentModel.DesignerSerializationVisibility.Hidden)]
     public int OverallOpacity { get; set; } = AppConfig.DefaultOverlayOpacity;
 
-    /// <summary>グループがないときに描こうとしたら呼ぶ。作ったグループのレイヤーを返す。</summary>
+    /// <summary>グループを選んでいないときに描こうとしたら呼ぶ。作ったグループを返す。</summary>
     [System.ComponentModel.DesignerSerializationVisibility(System.ComponentModel.DesignerSerializationVisibility.Hidden)]
-    public Func<CustomTileLayer?>? RequestLayer { get; set; }
+    public Func<CustomTileGroup?>? RequestGroup { get; set; }
 
     /// <summary>マスを描いた・消したとき。</summary>
     public event EventHandler? CellsChanged;
+
+    /// <summary>スポイト (Alt + 左・右クリック) で、描いたマスのレイヤーを拾ったとき (SelectedGroup・Layer は拾ったものになっている)。</summary>
+    public event EventHandler? LayerPicked;
 
     /// <summary>描く・消すドラッグを始める直前 (まだマスを変えていない)。</summary>
     public event EventHandler? StrokeStarting;
@@ -175,7 +186,10 @@ internal sealed class CustomTilesCanvas : Control
             using (var layerGraphics = Graphics.FromImage(layer))
             {
                 layerGraphics.SmoothingMode = SmoothingMode.AntiAlias;
-                foreach (var tiles in Groups.Where(group => group.Shown || group == SelectedGroup).SelectMany(group => group.ToCustomTiles(OverallOpacity)))
+                var drawn = Groups.Where(group => (group.Shown || group == SelectedGroup) && GroupFilter?.Invoke(group) != false).ToList();
+                // 優先度の低いマス (Gマス) は、どのグループのほかのマスよりも下に描く。
+                foreach (var tiles in drawn.SelectMany(group => group.ToCustomTiles(OverallOpacity, low: true))
+                    .Concat(drawn.SelectMany(group => group.ToCustomTiles(OverallOpacity, low: false))))
                 {
                     OverlayForm.DrawCustomTiles(layerGraphics, grid, tiles, visible);
                 }
@@ -183,8 +197,9 @@ internal sealed class CustomTilesCanvas : Control
                 {
                     // 描くとどうなるかの見本 (小さいマスずつなら、その小さいマス)。
                     var mask = Shape.Mask == 0 ? CustomTileShape.PartMask(target.Part.X, target.Part.Y) : Shape.Mask;
-                    var preview = new CustomTileLayer { Cells = [[target.Cell.X, target.Cell.Y, mask, Thickness]] };
-                    OverlayForm.DrawCustomTiles(layerGraphics, grid, preview.ToCustomTiles() with { Color = PreviewColor }, visible);
+                    var cells = Shape.CellsAround(target.Cell.X, target.Cell.Y).Select(cell => new[] { cell.X, cell.Y, mask, Thickness }).ToList();
+                    var preview = CustomTileGroup.ToCustomTiles(cells, CurrentLayer) with { Color = PreviewColor };
+                    OverlayForm.DrawCustomTiles(layerGraphics, grid, preview, visible);
                 }
             }
             graphics.DrawImageUnscaled(layer, 0, 0);
@@ -226,12 +241,17 @@ internal sealed class CustomTilesCanvas : Control
         {
             return;
         }
-        var layer = Selected ?? RequestLayer?.Invoke();
-        if (layer is null)
+        if (ModifierKeys.HasFlag(Keys.Alt))
+        {
+            PickLayer(TargetAt(e.Location).Cell);
+            return;
+        }
+        var group = SelectedGroup ?? RequestGroup?.Invoke();
+        if (group is null)
         {
             return;
         }
-        Selected = layer;
+        SelectedGroup = group;
         painting = e.Button == MouseButtons.Left;
         lastPainted = null;
         Capture = true;
@@ -343,8 +363,23 @@ internal sealed class CustomTilesCanvas : Control
     }
 
     /// <summary>
-    /// 左ボタンなら選んでいる形を選んでいる太さで描き (同じマスの前の形は置き換える)、右ボタンならマスを消す。
-    /// 小さいマスずつなら、その小さいマスだけを足す・消す (足すときは太さも選んでいる太さにする)。
+    /// スポイト: マスを描いたグループとレイヤーを選ぶ。選んでいるグループに描いたマスがなければ、上に描いている表示中のグループから拾う。
+    /// </summary>
+    private void PickLayer((int X, int Y) cell)
+    {
+        var groups = new[] { SelectedGroup }.Concat(Groups.Where(group => group.Shown && GroupFilter?.Invoke(group) != false).Reverse()).OfType<CustomTileGroup>();
+        if (groups.Select(group => (Group: group, Layer: group.LayerAt(cell.X, cell.Y))).FirstOrDefault(found => found.Layer is not null) is { Layer: { } layer } picked)
+        {
+            SelectedGroup = picked.Group;
+            Layer = layer;
+            Invalidate();
+            LayerPicked?.Invoke(this, EventArgs.Empty);
+        }
+    }
+
+    /// <summary>
+    /// 左ボタンなら選んでいる形を選んでいる太さ・レイヤーで描き (同じマスの前の形は置き換える)、右ボタンならマスを消す。
+    /// 小さいマスずつなら、その小さいマスだけを足す・消す (足すときは太さ・レイヤーも選んでいるものにする)。
     /// </summary>
     private void PaintAt(((int X, int Y) Cell, (int X, int Y) Part) target)
     {
@@ -353,16 +388,27 @@ internal sealed class CustomTilesCanvas : Control
         {
             target = (target.Cell, (0, 0)); // 小さいマスの違いは見ない (同じマスで描き直さない)
         }
-        if (painting is not { } on || Selected is not { } layer || target == lastPainted)
+        if (painting is not { } on || SelectedGroup is not { } group || Layer < 0 || Layer >= group.Layers.Count || target == lastPainted)
         {
             return;
         }
         lastPainted = target;
+        if (Shape.Size > 1)
+        {
+            // Gマス: 中心のマスだけを置く (描くときに広げる)。消すときは、そのマスを塗っている Gマスを消す。
+            if (on ? group.AddArea(target.Cell.X, target.Cell.Y, Layer) : group.RemoveAreasAt(target.Cell.X, target.Cell.Y))
+            {
+                Invalidate();
+                CellsChanged?.Invoke(this, EventArgs.Empty);
+            }
+            return;
+        }
         var (x, y) = target.Cell;
         var mask = !free ? (on ? Shape.Mask : 0)
-            : on ? layer.MaskAt(x, y) | CustomTileShape.PartMask(target.Part.X, target.Part.Y)
-            : layer.MaskAt(x, y) & ~CustomTileShape.PartMask(target.Part.X, target.Part.Y);
-        if (layer.SetCell(x, y, mask, on ? Thickness : layer.ThicknessAt(x, y)))
+            : on ? group.MaskAt(x, y) | CustomTileShape.PartMask(target.Part.X, target.Part.Y)
+            : group.MaskAt(x, y) & ~CustomTileShape.PartMask(target.Part.X, target.Part.Y);
+        // 描くときは選んでいる太さ・レイヤーにし、消すときは残る部分の太さ・レイヤーを変えない。
+        if (group.SetCell(x, y, mask, on ? Thickness : group.ThicknessAt(x, y), on ? Layer : group.LayerAt(x, y) ?? Layer))
         {
             Invalidate();
             CellsChanged?.Invoke(this, EventArgs.Empty);

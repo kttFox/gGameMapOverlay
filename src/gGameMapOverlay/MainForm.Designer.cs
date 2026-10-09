@@ -78,9 +78,11 @@ partial class MainForm
 		this.playerOpacityUnit = new Label();
 		this.flowLayoutPanel1 = new FlowLayoutPanel();
 		this.customTilesButton = new Button();
+		this.mapTilesButton = new Button();
 		this.overlayOptionPanel = new FlowLayoutPanel();
 		this.antiAliasCheck = new CheckBox();
 		this.dottedCheck = new CheckBox();
+		this.outlineCheck = new CheckBox();
 		this.controlsPanel = new TableLayoutPanel();
 		this.toggleButton = new Button();
 		this.updateStatusLabel = new Label();
@@ -807,13 +809,15 @@ partial class MainForm
 		// 
 		// flowLayoutPanel1
 		// 
-		this.flowLayoutPanel1.Anchor =  AnchorStyles.Bottom  |  AnchorStyles.Left ;
 		this.flowLayoutPanel1.AutoSize = true;
 		this.flowLayoutPanel1.Controls.Add( this.customTilesButton );
-		this.flowLayoutPanel1.Location = new Point( 232, 151 );
+		this.flowLayoutPanel1.Controls.Add( this.mapTilesButton );
+		this.flowLayoutPanel1.Dock = DockStyle.Bottom;
+		this.flowLayoutPanel1.FlowDirection = FlowDirection.TopDown;
+		this.flowLayoutPanel1.Location = new Point( 232, 121 );
 		this.flowLayoutPanel1.Margin = new Padding( 15, 3, 3, 0 );
 		this.flowLayoutPanel1.Name = "flowLayoutPanel1";
-		this.flowLayoutPanel1.Size = new Size( 106, 30 );
+		this.flowLayoutPanel1.Size = new Size( 192, 60 );
 		this.flowLayoutPanel1.TabIndex = 2;
 		// 
 		// customTilesButton
@@ -831,6 +835,20 @@ partial class MainForm
 		this.customTilesButton.Visible = false;
 		this.customTilesButton.Click +=  this.CustomTilesButton_Click ;
 		// 
+		// mapTilesButton
+		// 
+		this.mapTilesButton.Anchor =  AnchorStyles.Bottom  |  AnchorStyles.Left ;
+		this.mapTilesButton.AutoSize = true;
+		this.mapTilesButton.Location = new Point( 3, 33 );
+		this.mapTilesButton.Margin = new Padding( 3, 3, 3, 2 );
+		this.mapTilesButton.Name = "mapTilesButton";
+		this.mapTilesButton.Size = new Size( 100, 25 );
+		this.mapTilesButton.TabIndex = 3;
+		this.mapTilesButton.Text = "マップのマス...";
+		this.toolTip.SetToolTip( this.mapTilesButton, "今いるマップの座標に自分でマスを描きます (そのマップにいるときだけ表示)" );
+		this.mapTilesButton.UseVisualStyleBackColor = true;
+		this.mapTilesButton.Click +=  this.MapTilesButton_Click ;
+		// 
 		// overlayOptionPanel
 		// 
 		this.overlayOptionPanel.Anchor =   AnchorStyles.Top  |  AnchorStyles.Bottom   |  AnchorStyles.Left ;
@@ -838,11 +856,12 @@ partial class MainForm
 		this.overlayOptionPanel.AutoSizeMode = AutoSizeMode.GrowAndShrink;
 		this.overlayOptionPanel.Controls.Add( this.antiAliasCheck );
 		this.overlayOptionPanel.Controls.Add( this.dottedCheck );
+		this.overlayOptionPanel.Controls.Add( this.outlineCheck );
 		this.overlayOptionPanel.FlowDirection = FlowDirection.TopDown;
 		this.overlayOptionPanel.Location = new Point( 229, 4 );
 		this.overlayOptionPanel.Margin = new Padding( 12, 4, 0, 2 );
 		this.overlayOptionPanel.Name = "overlayOptionPanel";
-		this.overlayOptionPanel.Size = new Size( 103, 50 );
+		this.overlayOptionPanel.Size = new Size( 103, 75 );
 		this.overlayOptionPanel.TabIndex = 13;
 		this.overlayOptionPanel.WrapContents = false;
 		// 
@@ -871,6 +890,19 @@ partial class MainForm
 		this.toolTip.SetToolTip( this.dottedCheck, "マスを 1 画素おきのドットで塗ります" );
 		this.dottedCheck.UseVisualStyleBackColor = true;
 		this.dottedCheck.CheckedChanged +=  this.DottedCheck_CheckedChanged ;
+		// 
+		// outlineCheck
+		// 
+		this.outlineCheck.Anchor = AnchorStyles.Left;
+		this.outlineCheck.AutoSize = true;
+		this.outlineCheck.Location = new Point( 3, 53 );
+		this.outlineCheck.Name = "outlineCheck";
+		this.outlineCheck.Size = new Size( 62, 19 );
+		this.outlineCheck.TabIndex = 2;
+		this.outlineCheck.Text = "輪郭線";
+		this.toolTip.SetToolTip( this.outlineCheck, "マスの縁に線を描きます" );
+		this.outlineCheck.UseVisualStyleBackColor = true;
+		this.outlineCheck.CheckedChanged +=  this.OutlineCheck_CheckedChanged ;
 		// 
 		// controlsPanel
 		// 
@@ -1071,7 +1103,9 @@ partial class MainForm
     private FlowLayoutPanel overlayOptionPanel;
     private CheckBox antiAliasCheck;
     private CheckBox dottedCheck;
+    private CheckBox outlineCheck;
     private Button customTilesButton;
+    private Button mapTilesButton;
     private ToolTip toolTip;
     private TableLayoutPanel headerPanel;
     private Label statusLabel;

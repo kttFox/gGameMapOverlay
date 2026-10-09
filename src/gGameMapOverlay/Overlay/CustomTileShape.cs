@@ -12,7 +12,8 @@
 /// 隣り合う小さいマスを両方塗るなら、その間 (太さ 1/3 より細いときにできる隙間) も塗ってつなげる。
 /// </summary>
 /// <param name="Mask">0 なら決まった形ではなく、小さいマスを 1 つずつ描く (Free)。</param>
-public sealed record CustomTileShape(string Name, int Mask)
+/// <param name="Size">一度に描く範囲 (Size × Size マス。対象のマスを中心に、各マスを Mask で描く)。</param>
+public sealed record CustomTileShape(string Name, int Mask, int Size = 1)
 {
     private const int N = CustomTileGroup.Division;
 
@@ -44,6 +45,10 @@ public sealed record CustomTileShape(string Name, int Mask)
     /// <summary>小さいマスを 1 つずつ描く (左クリックで足す、右クリックで消す)。</summary>
     public static readonly CustomTileShape Free = new("小さいマスずつ", 0);
 
+    public static readonly CustomTileShape Frame = new("枠", CustomTileGroup.FrameFlag);
+
+    public static readonly CustomTileShape ThickFrame = new("太枠", CustomTileGroup.FullMask & ~Center);
+
     /// <summary>選べる形 (編集画面に並べる順)。</summary>
     public static readonly IReadOnlyList<CustomTileShape> All =
     [
@@ -60,9 +65,31 @@ public sealed record CustomTileShape(string Name, int Mask)
         new("丁字 (右)", Edge(false, N - 1) | Edge(true, 1)),
         new("丁字 (下)", Edge(true, N - 1) | Edge(false, 1)),
         new("丁字 (左)", Edge(false, 0) | Edge(true, 1)),
-        new("枠", CustomTileGroup.FrameFlag),
-        new("太枠", CustomTileGroup.FullMask & ~Center),
+        Frame,
+        ThickFrame,
     ];
+
+    /// <summary>対象のマスを中心に 15 × 15 マスを塗る。中心のマスだけを CustomTileGroup.Areas に持ち、優先度は最低。</summary>
+    public static readonly CustomTileShape GArea = new("Gマス (15 × 15)", CustomTileGroup.FullMask, CustomTileGroup.AreaSize);
+
+    /// <summary>マップのマスで選べる形 (編集画面に並べる順)。</summary>
+    public static readonly IReadOnlyList<CustomTileShape> MapShapes = [Full, Free, Frame, ThickFrame, GArea];
+
+    /// <summary>
+    /// マス (x, y) を対象にしたときに描くマス。Size が偶数なら中心は 4 マスの真ん中にないので、
+    /// 対象のマスから左上 (- 方向) に Size / 2、右下に Size / 2 - 1 マス広げる。
+    /// </summary>
+    public IEnumerable<(int X, int Y)> CellsAround(int x, int y)
+    {
+        var from = -(Size / 2);
+        for (var dy = from; dy < from + Size; dy++)
+        {
+            for (var dx = from; dx < from + Size; dx++)
+            {
+                yield return (x + dx, y + dy);
+            }
+        }
+    }
 
     /// <summary>形の小さいマス (sx, sy) の一覧。</summary>
     public static IEnumerable<(int X, int Y)> Parts(int mask)

@@ -94,6 +94,8 @@ internal sealed partial class MainForm : Form, ISettingsHost, IInfoSource {
 	// オーバーレイに渡す、自分で描いたマス (相対位置) と色。設定を変えたときだけ作り直す
 	// (同じ中身でも作り直すと OverlayScene が別物とみなされるので、読み取りごとには作らない)。
 	private IReadOnlyList<CustomTiles> customTiles = [];
+	// マップに固定した自分で描いたマス (マップの名前と、そのマップの座標で描く形)。
+	private IReadOnlyList<(string MapName, CustomTiles Tiles)> mapCustomTiles = [];
 	// カスタムのグループごとの、色の見本・表示を切り替えるチェックボックス・不透明度 (個別にするチェックボックスと値と単位)。
 	// グリッド・プレイヤーの下に並べる。グループの数が変わったら作り直す。
 	private readonly List<(CheckBox Box, Panel Swatch, CheckBox Own, NumericUpDown Opacity, Label Unit)> customControls = [];
@@ -106,7 +108,7 @@ internal sealed partial class MainForm : Form, ISettingsHost, IInfoSource {
 
 	private bool ImageMode => imageFrame is not null;
 
-	// 隠し機能: タイトルバーのアイコンの右クリックメニューで、カスタムのマスの編集ボタンを出す (config.ShowCustomTilesButton)。
+	// 隠し機能: タイトルバーのアイコンの右クリックメニューで、カスタムのマスの編集ボタンを出す (config.ShowCustomTilesButton)。マップのマスのボタンは常に出す。
 	private const int CustomTilesMenuId = 0x100;
 
 	/// <param name="debug">画像モード (スクリーンショットから読み取る) のボタンを表示する。</param>
@@ -120,7 +122,7 @@ internal sealed partial class MainForm : Form, ISettingsHost, IInfoSource {
 		LoadOverlayData();
 
 		InitializeComponent();
-		trayIcon.Icon = ( Environment.ProcessPath is { } exe ? Icon.ExtractAssociatedIcon( exe ) : null ) ?? SystemIcons.Application;
+		trayIcon.Icon = Icon;
 		trayIcon.Visible = config.StayInTray;
 		layerControls = new() {
 			[OverlayLayer.MonsterBlock] = (monsterBlockSwatch, monsterBlockBox),
@@ -142,6 +144,7 @@ internal sealed partial class MainForm : Form, ISettingsHost, IInfoSource {
 		UpdateOcrControls();
 		overlay.AntiAlias = config.OverlayAntiAlias;
 		overlay.DottedTiles = config.OverlayDotted;
+		overlay.OutlinedTiles = config.OverlayOutlined;
 		overlay.ShowChunks = config.OverlayShowChunks;
 		overlay.SlideMs = config.OverlaySlide ? StepMs : 0;
 		overlay.JumpDelayMs = config.OverlaySlide ? 0 : config.EffectiveOverlayJumpDelayMs;
@@ -245,11 +248,12 @@ internal sealed partial class MainForm : Form, ISettingsHost, IInfoSource {
 		if( loadingLayers ) {
 			return;
 		}
+		var groups = config.CustomGroups;
 		var index = customControls.FindIndex( controls => controls.Box == sender );
-		if( index < 0 || index >= config.CustomGroups.Count ) {
+		if( index < 0 || index >= groups.Count ) {
 			return;
 		}
-		config.CustomGroups[index].Shown = customControls[index].Box.Checked;
+		groups[index].Shown = customControls[index].Box.Checked;
 		OverlaySettingsChanged();
 	}
 
@@ -257,11 +261,12 @@ internal sealed partial class MainForm : Form, ISettingsHost, IInfoSource {
 		if( loadingLayers ) {
 			return;
 		}
+		var groups = config.CustomGroups;
 		var index = customControls.FindIndex( controls => controls.Opacity == sender || controls.Own == sender );
-		if( index < 0 || index >= config.CustomGroups.Count ) {
+		if( index < 0 || index >= groups.Count ) {
 			return;
 		}
-		var group = config.CustomGroups[index];
+		var group = groups[index];
 		group.OwnOpacity = customControls[index].Own.Checked;
 		if( group.OwnOpacity ) {
 			group.Opacity = (int)customControls[index].Opacity.Value; // チェックを入れたときは今の値 (全体の値) から始める
@@ -338,6 +343,13 @@ internal sealed partial class MainForm : Form, ISettingsHost, IInfoSource {
 	private void DottedCheck_CheckedChanged( object? sender, EventArgs e ) {
 		if( !loadingLayers ) {
 			config.OverlayDotted = dottedCheck.Checked;
+			OverlaySettingsChanged();
+		}
+	}
+
+	private void OutlineCheck_CheckedChanged( object? sender, EventArgs e ) {
+		if( !loadingLayers ) {
+			config.OverlayOutlined = outlineCheck.Checked;
 			OverlaySettingsChanged();
 		}
 	}
@@ -938,9 +950,10 @@ internal sealed partial class MainForm : Form, ISettingsHost, IInfoSource {
 			}
 			antiAliasCheck.Checked = config.OverlayAntiAlias;
 			dottedCheck.Checked = config.OverlayDotted;
+			outlineCheck.Checked = config.OverlayOutlined;
 			customTilesButton.Visible = config.ShowCustomTilesButton;
 			LoadCustomControls();
-			customTiles = config.ShownCustomGroups.SelectMany( group => group.ToCustomTiles( config.OverlayOpacity ) ).ToList();
+			SetCustomTiles( config.CustomGroups, config.MapCustomGroups );
 		} finally {
 			loadingLayers = false;
 		}
@@ -996,7 +1009,7 @@ internal sealed partial class MainForm : Form, ISettingsHost, IInfoSource {
 			opacity.Enabled = own.Checked;
 			opacity.Value = Math.Clamp( groups[i].GetOpacity( config.OverlayOpacity ), opacity.Minimum, opacity.Maximum );
 			var old = swatch.BackgroundImage;
-			swatch.BackgroundImage = CustomTilesForm.Swatch( groups[i], swatch.ClientSize ); // レイヤーの色を並べる
+			swatch.BackgroundImage = CustomTilesForm.Swatch( groups[i], swatch.ClientSize ); // 使っているペンの色を並べる
 			old?.Dispose();
 			box.Text = groups[i].Name.Length > 0 ? groups[i].Name : "(名前なし)";
 			box.Checked = groups[i].Shown;
@@ -1012,6 +1025,7 @@ internal sealed partial class MainForm : Form, ISettingsHost, IInfoSource {
 		LoadLayerSettings();
 		overlay.AntiAlias = config.OverlayAntiAlias;
 		overlay.DottedTiles = config.OverlayDotted;
+		overlay.OutlinedTiles = config.OverlayOutlined;
 		overlay.ShowChunks = config.OverlayShowChunks;
 		Save();
 		if( ImageMode || !running ) {
@@ -1058,7 +1072,7 @@ internal sealed partial class MainForm : Form, ISettingsHost, IInfoSource {
 	private OverlayScene? BuildOverlayScene( Reading reading ) {
 		// ウィンドウがない・裏にある・撮影できない (画面ロック中など) ときは出さない。
 		// 座標やマップ名を読めないとき (読み取り領域がない・座標欄が黒い・OCR で読めない) は、OCR によらないものだけ描く。
-		if( !( config.OverlayEnabled || customTiles.Count > 0 ) || reading.Status is ReadingStatus.NoWindow or ReadingStatus.Background or ReadingStatus.CaptureFailed
+		if( !( config.OverlayEnabled || customTiles.Count > 0 || mapCustomTiles.Count > 0 ) || reading.Status is ReadingStatus.NoWindow or ReadingStatus.Background or ReadingStatus.CaptureFailed
 			|| reader.FindClientRect() is not { } client ) {
 			return null;
 		}
@@ -1080,7 +1094,11 @@ internal sealed partial class MainForm : Form, ISettingsHost, IInfoSource {
 				}
 			}
 		}
-		if( layers.Count == 0 && !config.ShowGrid && !config.ShowPlayer && customTiles.Count == 0 ) {
+		// マップに固定したマスは、マップ名と座標が読めていて、そのマップにいるときだけ描く。
+		var mapCustom = coordinates is not null && reading.MapName is { } currentMap && !reading.NameStale
+			? mapCustomTiles.Where( entry => entry.MapName == currentMap ).Select( entry => entry.Tiles ).ToList()
+			: [];
+		if( layers.Count == 0 && !config.ShowGrid && !config.ShowPlayer && customTiles.Count == 0 && mapCustom.Count == 0 ) {
 			return null;
 		}
 		var grid = IsoGrid.ForClient( client.Size, coordinates ?? new GameCoordinate( 0, 0 ) );
@@ -1090,7 +1108,8 @@ internal sealed partial class MainForm : Form, ISettingsHost, IInfoSource {
 			config.ShowGrid ? config.GetGridColor() : null,
 			GameUi.Rectangles( client.Size, reader.LastTransform, includeStatus: true ),
 			config.ShowPlayer ? config.GetPlayerColor() : null,
-			customTiles );
+			customTiles,
+			mapCustom );
 	}
 
 	private void UpdatePreview( BgrImage nameImage, BgrImage coordinateImage ) {
@@ -1192,22 +1211,50 @@ internal sealed partial class MainForm : Form, ISettingsHost, IInfoSource {
 		}
 	}
 
-	/// <summary>編集中のグループ groups を、保存せずにオーバーレイに描く。null なら設定のグループに戻す。</summary>
-	private void PreviewCustomTiles( IReadOnlyList<CustomTileGroup>? groups ) {
-		customTiles = ( groups ?? config.CustomGroups ).Where( group => group.Shown && group.CellCount > 0 )
-			.SelectMany( group => group.ToCustomTiles( config.OverlayOpacity ) ).ToList();
+	/// <summary>編集中のグループを、保存せずにオーバーレイに描く。null なら設定のグループに戻す。</summary>
+	private void PreviewCustomTiles( IEnumerable<CustomTileGroup>? groups, IEnumerable<CustomTileGroup>? mapGroups ) {
+		SetCustomTiles( groups ?? config.CustomGroups, mapGroups ?? config.MapCustomGroups );
 		if( !ImageMode && running && lastLiveReading is not null ) {
 			UpdateOverlay( lastLiveReading );
 		}
 	}
 
+	/// <summary>オーバーレイに描く自分で描いたマスを、キャラクターに付いていく groups とマップに固定した mapGroups の表示するものにする。</summary>
+	private void SetCustomTiles( IEnumerable<CustomTileGroup> groups, IEnumerable<CustomTileGroup> mapGroups ) {
+		customTiles = groups.Where( group => group.Shown && group.CellCount > 0 )
+			.SelectMany( group => group.ToCustomTiles( config.OverlayOpacity ) ).ToList();
+		// 優先度の低いマス (Gマス) は、どのグループのほかのマスよりも下に描く。
+		var shownMap = mapGroups.Where( group => group.Shown && group.CellCount > 0 && group.OnMap ).ToList();
+		mapCustomTiles = new[] { true, false }
+			.SelectMany( low => shownMap.SelectMany( group => group.ToMapTiles( config.OverlayOpacity, low ).Select( tiles => (group.MapName!, tiles) ) ) ).ToList();
+	}
+
+	/// <summary>今いるマップと座標 (読めていなければ null)。マップのマスを編集するときに使う。</summary>
+	private (string MapName, GameCoordinate Position)? CurrentPlace() =>
+		lastLiveReading is { MapName: { } mapName, NameStale: false, Coordinates: { } position, CoordinatesStale: false } ? (mapName, position) : null;
+
 	/// <summary>自分で描くマス (カスタム) の編集画面を開く。</summary>
 	private void ShowCustomTiles() {
-		using var form = new CustomTilesForm( config, PreviewCustomTiles, CaptureGameClientAsync );
+		using var form = new CustomTilesForm( config, config.CustomGroups, groups => PreviewCustomTiles( groups, null ), CaptureGameClientAsync );
 		if( form.ShowDialog( this ) == DialogResult.OK ) {
 			config.CustomGroups = form.Groups;
 		}
 		OverlaySettingsChanged(); // キャンセルでも、背景にゲームを映すかは保存する
+	}
+
+	private void MapTilesButton_Click( object? sender, EventArgs e ) => ShowMapTiles();
+
+	/// <summary>
+	/// マップに固定する自分で描くマスの編集画面を開く。いつでも開け、すべてのマップのグループを編集する。
+	/// 今いるマップと座標が読めていれば、そのマップのグループを今の位置を中央にして開く。グループを足すときは、押したときに読めているか確かめる。
+	/// </summary>
+	private void ShowMapTiles() {
+		using var form = new CustomTilesForm( config, config.MapCustomGroups, groups => PreviewCustomTiles( null, groups ), CaptureGameClientAsync,
+			mapMode: true, CurrentPlace );
+		if( form.ShowDialog( this ) == DialogResult.OK ) {
+			config.MapCustomGroups = form.Groups;
+		}
+		OverlaySettingsChanged();
 	}
 
 	/// <summary>設定画面の位置を config に書く (保存はしない)。</summary>

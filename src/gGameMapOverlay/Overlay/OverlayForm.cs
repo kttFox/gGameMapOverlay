@@ -10,15 +10,18 @@ namespace gGameMapOverlay.Overlay;
 /// <param name="GridColor">マスの格子の線の色 (マスの種類より下に描く)。null なら描かない。</param>
 /// <param name="PlayerColor">キャラクターのいるマスの枠の色。null なら描かない。</param>
 /// <param name="Custom">自分で描いたマス (キャラクターのいるマスからの相対位置) とその色。この順に重ね、プレイヤーの枠と同じくずらさずに描く。</param>
+/// <param name="MapCustom">自分で描いた、マップに固定したマス (そのマップの座標)。地形と一緒に、マスの種類の上に描く (Gマス (Low) はマスの種類の下)。</param>
 internal sealed record OverlayScene(
     Rectangle ClientRect, IsoGrid Grid, IReadOnlyList<(OverlayLayer Layer, TileRects Tiles, Color Color)> Layers, Rectangle? Excluded1, Rectangle? Excluded2,
-    Color? GridColor = null, IReadOnlyList<Rectangle>? UiAreas = null, Color? PlayerColor = null, IReadOnlyList<CustomTiles>? Custom = null)
+    Color? GridColor = null, IReadOnlyList<Rectangle>? UiAreas = null, Color? PlayerColor = null, IReadOnlyList<CustomTiles>? Custom = null,
+    IReadOnlyList<CustomTiles>? MapCustom = null)
 {
     // Layers はリストなので、既定の (参照による) 比較ではなく中身で比べる。
     public bool Equals(OverlayScene? other) =>
         other is not null && ClientRect == other.ClientRect && Grid == other.Grid && Excluded1 == other.Excluded1 && Excluded2 == other.Excluded2
         && GridColor == other.GridColor && PlayerColor == other.PlayerColor
-        && (UiAreas ?? []).SequenceEqual(other.UiAreas ?? []) && Layers.SequenceEqual(other.Layers) && (Custom ?? []).SequenceEqual(other.Custom ?? []);
+        && (UiAreas ?? []).SequenceEqual(other.UiAreas ?? []) && Layers.SequenceEqual(other.Layers) && (Custom ?? []).SequenceEqual(other.Custom ?? [])
+        && (MapCustom ?? []).SequenceEqual(other.MapCustom ?? []);
 
     public override int GetHashCode() => HashCode.Combine(ClientRect, Grid, Layers.Count, Excluded1, Excluded2);
 }
@@ -1251,6 +1254,23 @@ internal sealed class OverlayForm : Form
     // DrawTiles は static なので static に持つ (オーバーレイは 1 つだけ)。
     private static bool dottedTiles;
 
+    /// <summary>地形のマスの縁 (輪郭線) を描くか。自分で描いたマスはレイヤーごとに持つ (CustomTileLayer.Outlined)。</summary>
+    [System.ComponentModel.DesignerSerializationVisibility(System.ComponentModel.DesignerSerializationVisibility.Hidden)]
+    public bool OutlinedTiles
+    {
+        get => outlinedTiles;
+        set
+        {
+            if (value != outlinedTiles)
+            {
+                outlinedTiles = value;
+                Redraw();
+            }
+        }
+    }
+
+    private static bool outlinedTiles = true;
+
     protected override void OnHandleCreated(EventArgs e)
     {
         base.OnHandleCreated(e);
@@ -1298,16 +1318,17 @@ internal sealed class OverlayForm : Form
     // チャンクは画素の正方形なので、隣のチャンクとは同じ形を同じ位置で描いて切り分けるだけになり、継ぎ目は出ない。
 
     /// <summary>地形の中身が同じか (キャラクターの位置や除外範囲は見ない)。</summary>
-    private sealed record TerrainKey(IReadOnlyList<(OverlayLayer Layer, TileRects Tiles, Color Color)> Layers, Color? GridColor, double TileWidth, double TileHeight, bool AntiAlias, bool Dotted)
+    private sealed record TerrainKey(IReadOnlyList<(OverlayLayer Layer, TileRects Tiles, Color Color)> Layers, IReadOnlyList<CustomTiles> MapCustom, Color? GridColor, double TileWidth, double TileHeight, bool AntiAlias, bool Dotted, bool Outlined)
     {
         public bool Equals(TerrainKey? other) =>
             other is not null && GridColor == other.GridColor && TileWidth == other.TileWidth && TileHeight == other.TileHeight
-            && AntiAlias == other.AntiAlias && Dotted == other.Dotted && Layers.SequenceEqual(other.Layers);
+            && AntiAlias == other.AntiAlias && Dotted == other.Dotted && Outlined == other.Outlined && Layers.SequenceEqual(other.Layers)
+            && MapCustom.SequenceEqual(other.MapCustom);
 
-        public override int GetHashCode() => HashCode.Combine(Layers.Count, GridColor, TileWidth, TileHeight, AntiAlias, Dotted);
+        public override int GetHashCode() => HashCode.Combine(Layers.Count, GridColor, TileWidth, TileHeight, AntiAlias, Dotted, Outlined);
 
         public static TerrainKey Of(OverlayScene scene, bool antiAlias) =>
-            new(scene.Layers, scene.GridColor, scene.Grid.TileWidth, scene.Grid.TileHeight, antiAlias, dottedTiles);
+            new(scene.Layers, scene.MapCustom ?? [], scene.GridColor, scene.Grid.TileWidth, scene.Grid.TileHeight, antiAlias, dottedTiles, outlinedTiles);
 
         /// <summary>previous から何が変わったか (ログ用)。</summary>
         public string DescribeChange(TerrainKey previous)
@@ -1316,6 +1337,10 @@ internal sealed class OverlayForm : Form
             if (!Layers.SequenceEqual(previous.Layers))
             {
                 changes.Add($"マスの種類 [{string.Join(", ", previous.Layers.Select(Describe))}] → [{string.Join(", ", Layers.Select(Describe))}]");
+            }
+            if (!MapCustom.SequenceEqual(previous.MapCustom))
+            {
+                changes.Add($"マップに固定したマス {previous.MapCustom.Count} → {MapCustom.Count}");
             }
             if (GridColor != previous.GridColor)
             {
@@ -1332,6 +1357,10 @@ internal sealed class OverlayForm : Form
             if (Dotted != previous.Dotted)
             {
                 changes.Add($"ドット {previous.Dotted} → {Dotted}");
+            }
+            if (Outlined != previous.Outlined)
+            {
+                changes.Add($"輪郭線 {previous.Outlined} → {Outlined}");
             }
             return string.Join("、", changes);
 
@@ -1441,7 +1470,7 @@ internal sealed class OverlayForm : Form
 
     private void ComposeChunks(OverlayScene current, bool antiAlias)
     {
-        if (current.Layers.Count == 0 && current.GridColor is null)
+        if (current.Layers.Count == 0 && current.MapCustom is not { Count: > 0 } && current.GridColor is null)
         {
             // 地形に描くものがない (プレイヤーの枠・自分で描いたマスだけ): チャンクは作らない。持っていたものも捨てる。
             if (chunkKey is not null)
@@ -1564,11 +1593,20 @@ internal sealed class OverlayForm : Form
         {
             DrawGrid(graphics, grid, size, gridColor);
         }
+        // 優先度の低いマス (Gマス) は、マップのデータのマス (出入り口など) より下に描く (重なったところはデータのマスになる)。
+        foreach (var tiles in (current.MapCustom ?? []).Where(tiles => tiles.Low))
+        {
+            DrawCustomTiles(graphics, grid, tiles, visible);
+        }
         foreach (var (layer, tiles, color) in current.Layers)
         {
             // 下に描いた種類と重なるマスを小さく描く種類 (ShrinkOver) なら、その種類のマスを渡す。表示していなければ縮めない。
             var under = layer.ShrinkOver is { } shrinkOver ? current.Layers.FirstOrDefault(entry => entry.Layer == shrinkOver).Tiles : null;
-            DrawTiles(graphics, grid, tiles, color, visible, under, dottedTiles);
+            DrawTiles(graphics, grid, tiles, color, visible, under, dottedTiles, outlinedTiles);
+        }
+        foreach (var tiles in (current.MapCustom ?? []).Where(tiles => !tiles.Low))
+        {
+            DrawCustomTiles(graphics, grid, tiles, visible);
         }
     }
 
@@ -1586,7 +1624,7 @@ internal sealed class OverlayForm : Form
     /// <summary>1 グループ分の自分で描いたマス。grid はキャラクターのいるマスを (0, 0) にした格子 (編集画面でも使う)。</summary>
     internal static void DrawCustomTiles(Graphics graphics, IsoGrid grid, CustomTiles tiles, RectangleF visible)
     {
-        DrawTiles(graphics, CustomTileGroup.SubGrid(grid, tiles.Division), tiles.Fill, tiles.Color, visible, dotted: tiles.Dotted);
+        DrawTiles(graphics, CustomTileGroup.SubGrid(grid, tiles.Division), tiles.Fill, tiles.Color, visible, dotted: tiles.Dotted, outlined: tiles.Outlined);
         if (tiles.Frames.Rects.Length == 0)
         {
             return;
@@ -1619,7 +1657,7 @@ internal sealed class OverlayForm : Form
     /// (半透明でも色が混ざらない)。
     /// </summary>
     /// <param name="under">これと重なるマスは ShrinkScale 倍に縮めて描く (下のマスが周りに見えるように)。</param>
-    internal static void DrawTiles(Graphics graphics, IsoGrid grid, TileRects tiles, Color color, RectangleF visible, TileRects? under = null, bool dotted = false)
+    internal static void DrawTiles(Graphics graphics, IsoGrid grid, TileRects tiles, Color color, RectangleF visible, TileRects? under = null, bool dotted = false, bool outlined = true)
     {
         // 隣り合う長方形 (マス) の境目に縁を描かないよう、長方形の辺を集めて 2 回出てきた部分 (内側の境目) を消す。
         // 辺は線 (縦か, 位置) ごとに区間の端を集める。横の線 y は (from, y)-(to, y)、縦の線 x は (x, from)-(x, to)。
@@ -1694,7 +1732,14 @@ internal sealed class OverlayForm : Form
         foreach (var small in smalls)
         {
             graphics.FillPolygon(fill, small);
-            graphics.DrawPolygon(edge, small);
+            if (outlined)
+            {
+                graphics.DrawPolygon(edge, small);
+            }
+        }
+        if (!outlined)
+        {
+            return;
         }
         foreach (var ((vertical, line), ends) in edges)
         {

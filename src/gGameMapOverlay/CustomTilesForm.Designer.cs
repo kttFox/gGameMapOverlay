@@ -45,6 +45,8 @@ partial class CustomTilesForm
 		this.nameCaption = new Label();
 		this.nameBox = new TextBox();
 		this.opacityCaption = new Label();
+		this.mapCaption = new Label();
+		this.mapLabel = new Label();
 		this.opacityPanel = new FlowLayoutPanel();
 		this.opacityCheck = new CheckBox();
 		this.opacityBox = new StepNumericUpDown();
@@ -63,6 +65,7 @@ partial class CustomTilesForm
 		this.colorCaption = new Label();
 		this.colorButton = new Button();
 		this.dottedCheck = new CheckBox();
+		this.outlineCheck = new CheckBox();
 		this.shapeCaption = new Label();
 		this.shapePanel = new FlowLayoutPanel();
 		this.thicknessPanel = new FlowLayoutPanel();
@@ -124,7 +127,7 @@ partial class CustomTilesForm
 		this.mainPanel.RowStyles.Add( new RowStyle( SizeType.Percent, 100F ) );
 		this.mainPanel.RowStyles.Add( new RowStyle() );
 		this.mainPanel.RowStyles.Add( new RowStyle( SizeType.Absolute, 20F ) );
-		this.mainPanel.Size = new Size( 900, 619 );
+		this.mainPanel.Size = new Size( 884, 641 );
 		this.mainPanel.TabIndex = 0;
 		// 
 		// sidePanel
@@ -148,38 +151,37 @@ partial class CustomTilesForm
 		this.sidePanel.RowStyles.Add( new RowStyle() );
 		this.sidePanel.RowStyles.Add( new RowStyle() );
 		this.sidePanel.RowStyles.Add( new RowStyle() );
-		this.sidePanel.Size = new Size( 220, 601 );
+		this.sidePanel.RowStyles.Add( new RowStyle() );
+		this.sidePanel.Size = new Size( 220, 623 );
 		this.sidePanel.TabIndex = 0;
 		// 
 		// listSplit
 		// 
 		this.listSplit.Dock = DockStyle.Fill;
+		this.listSplit.IsSplitterFixed = true;
 		this.listSplit.Location = new Point( 0, 0 );
 		this.listSplit.Margin = new Padding( 0 );
-		this.listSplit.IsSplitterFixed = true;
 		this.listSplit.Name = "listSplit";
 		this.listSplit.Orientation = Orientation.Horizontal;
 		// 
 		// listSplit.Panel1
 		// 
 		this.listSplit.Panel1.Controls.Add( this.groupPanel );
-		this.listSplit.Panel1.Cursor = Cursors.Default;
-		this.listSplit.Panel1MinSize = 170;
+		this.listSplit.Panel1MinSize = 190;
 		// 
 		// listSplit.Panel2
 		// 
 		this.listSplit.Panel2.Controls.Add( this.layerPanel );
-		this.listSplit.Panel2.Cursor = Cursors.Default;
-		this.listSplit.Panel2MinSize = 130;
-		this.listSplit.Size = new Size( 220, 479 );
-		this.listSplit.SplitterDistance = 285;
+		this.listSplit.Panel2MinSize = 140;
+		this.listSplit.Size = new Size( 220, 486 );
+		this.listSplit.SplitterDistance = 237;
 		this.listSplit.SplitterWidth = 8;
 		this.listSplit.TabIndex = 0;
 		this.listSplit.Paint +=  this.ListSplit_Paint ;
 		this.listSplit.MouseDown +=  this.ListSplit_MouseDown ;
+		this.listSplit.MouseLeave +=  this.ListSplit_MouseLeave ;
 		this.listSplit.MouseMove +=  this.ListSplit_MouseMove ;
 		this.listSplit.MouseUp +=  this.ListSplit_MouseUp ;
-		this.listSplit.MouseLeave +=  this.ListSplit_MouseLeave ;
 		this.listSplit.Resize +=  this.ListSplit_Resize ;
 		// 
 		// groupPanel
@@ -199,7 +201,7 @@ partial class CustomTilesForm
 		this.groupPanel.RowStyles.Add( new RowStyle( SizeType.Percent, 100F ) );
 		this.groupPanel.RowStyles.Add( new RowStyle() );
 		this.groupPanel.RowStyles.Add( new RowStyle() );
-		this.groupPanel.Size = new Size( 220, 285 );
+		this.groupPanel.Size = new Size( 220, 237 );
 		this.groupPanel.TabIndex = 0;
 		// 
 		// groupCaption
@@ -223,7 +225,7 @@ partial class CustomTilesForm
 		this.groupList.MinimumSize = new Size( 214, 50 );
 		this.groupList.MultiSelect = false;
 		this.groupList.Name = "groupList";
-		this.groupList.Size = new Size( 214, 166 );
+		this.groupList.Size = new Size( 214, 91 );
 		this.groupList.SmallImageList = this.swatches;
 		this.groupList.TabIndex = 1;
 		this.groupList.UseCompatibleStateImageBehavior = false;
@@ -249,7 +251,7 @@ partial class CustomTilesForm
 		this.groupButtons.Controls.Add( this.removeButton );
 		this.groupButtons.Controls.Add( this.upButton );
 		this.groupButtons.Controls.Add( this.downButton );
-		this.groupButtons.Location = new Point( 0, 190 );
+		this.groupButtons.Location = new Point( 0, 115 );
 		this.groupButtons.Margin = new Padding( 0 );
 		this.groupButtons.Name = "groupButtons";
 		this.groupButtons.Size = new Size( 220, 31 );
@@ -310,14 +312,17 @@ partial class CustomTilesForm
 		this.propertyPanel.Controls.Add( this.nameCaption, 0, 0 );
 		this.propertyPanel.Controls.Add( this.nameBox, 1, 0 );
 		this.propertyPanel.Controls.Add( this.opacityCaption, 0, 1 );
+		this.propertyPanel.Controls.Add( this.mapCaption, 0, 2 );
+		this.propertyPanel.Controls.Add( this.mapLabel, 1, 2 );
 		this.propertyPanel.Controls.Add( this.opacityPanel, 1, 1 );
-		this.propertyPanel.Location = new Point( 0, 227 );
+		this.propertyPanel.Location = new Point( 0, 152 );
 		this.propertyPanel.Margin = new Padding( 0, 6, 0, 0 );
 		this.propertyPanel.Name = "propertyPanel";
-		this.propertyPanel.RowCount = 2;
+		this.propertyPanel.RowCount = 3;
 		this.propertyPanel.RowStyles.Add( new RowStyle() );
 		this.propertyPanel.RowStyles.Add( new RowStyle() );
-		this.propertyPanel.Size = new Size( 220, 58 );
+		this.propertyPanel.RowStyles.Add( new RowStyle() );
+		this.propertyPanel.Size = new Size( 220, 85 );
 		this.propertyPanel.TabIndex = 3;
 		// 
 		// nameCaption
@@ -350,6 +355,29 @@ partial class CustomTilesForm
 		this.opacityCaption.TabIndex = 4;
 		this.opacityCaption.Text = "不透明度";
 		// 
+		// mapCaption
+		// 
+		this.mapCaption.Anchor = AnchorStyles.Left;
+		this.mapCaption.AutoSize = true;
+		this.mapCaption.Location = new Point( 3, 64 );
+		this.mapCaption.Name = "mapCaption";
+		this.mapCaption.Size = new Size( 33, 15 );
+		this.mapCaption.TabIndex = 6;
+		this.mapCaption.Text = "マップ";
+		this.mapCaption.Visible = false;
+		// 
+		// mapLabel
+		// 
+		this.mapLabel.Anchor =  AnchorStyles.Left  |  AnchorStyles.Right ;
+		this.mapLabel.AutoEllipsis = true;
+		this.propertyPanel.SetColumnSpan( this.mapLabel, 2 );
+		this.mapLabel.Location = new Point( 64, 58 );
+		this.mapLabel.Name = "mapLabel";
+		this.mapLabel.Size = new Size( 153, 27 );
+		this.mapLabel.TabIndex = 7;
+		this.mapLabel.TextAlign = ContentAlignment.MiddleLeft;
+		this.mapLabel.Visible = false;
+		// 
 		// opacityPanel
 		// 
 		this.opacityPanel.Anchor = AnchorStyles.Left;
@@ -380,6 +408,7 @@ partial class CustomTilesForm
 		// opacityBox
 		// 
 		this.opacityBox.Anchor = AnchorStyles.Left;
+		this.opacityBox.Increment = new decimal( new int[] { 5, 0, 0, 0 } );
 		this.opacityBox.Location = new Point( 24, 3 );
 		this.opacityBox.Minimum = new decimal( new int[] { 10, 0, 0, 0 } );
 		this.opacityBox.Name = "opacityBox";
@@ -416,17 +445,17 @@ partial class CustomTilesForm
 		this.layerPanel.RowStyles.Add( new RowStyle( SizeType.Percent, 100F ) );
 		this.layerPanel.RowStyles.Add( new RowStyle() );
 		this.layerPanel.RowStyles.Add( new RowStyle() );
-		this.layerPanel.Size = new Size( 220, 186 );
+		this.layerPanel.Size = new Size( 220, 241 );
 		this.layerPanel.TabIndex = 0;
 		// 
 		// layerCaption
 		// 
 		this.layerCaption.AutoSize = true;
-		this.layerCaption.Location = new Point( 3, 0 );
-		this.layerCaption.Margin = new Padding( 3, 0, 3, 3 );
+		this.layerCaption.Location = new Point( 3, 3 );
+		this.layerCaption.Margin = new Padding( 3 );
 		this.layerCaption.Name = "layerCaption";
 		this.layerCaption.Size = new Size( 43, 15 );
-		this.layerCaption.TabIndex = 9;
+		this.layerCaption.TabIndex = 1;
 		this.layerCaption.Text = "レイヤー";
 		// 
 		// layerList
@@ -435,16 +464,16 @@ partial class CustomTilesForm
 		this.layerList.Dock = DockStyle.Fill;
 		this.layerList.FullRowSelect = true;
 		this.layerList.HeaderStyle = ColumnHeaderStyle.None;
-		this.layerList.Location = new Point( 3, 21 );
+		this.layerList.Location = new Point( 3, 24 );
+		this.layerList.MinimumSize = new Size( 214, 30 );
 		this.layerList.MultiSelect = false;
 		this.layerList.Name = "layerList";
-		this.layerList.Size = new Size( 214, 102 );
+		this.layerList.Size = new Size( 214, 151 );
 		this.layerList.SmallImageList = this.layerSwatches;
-		this.layerList.TabIndex = 10;
+		this.layerList.TabIndex = 2;
 		this.layerList.UseCompatibleStateImageBehavior = false;
 		this.layerList.View = View.Details;
 		this.layerList.SelectedIndexChanged +=  this.LayerList_SelectedIndexChanged ;
-		this.layerList.DoubleClick +=  this.ColorButton_Click ;
 		this.layerList.Resize +=  this.LayerList_Resize ;
 		// 
 		// layerColumn
@@ -464,11 +493,11 @@ partial class CustomTilesForm
 		this.layerButtons.Controls.Add( this.layerRemoveButton );
 		this.layerButtons.Controls.Add( this.layerUpButton );
 		this.layerButtons.Controls.Add( this.layerDownButton );
-		this.layerButtons.Location = new Point( 0, 126 );
+		this.layerButtons.Location = new Point( 0, 178 );
 		this.layerButtons.Margin = new Padding( 0 );
 		this.layerButtons.Name = "layerButtons";
 		this.layerButtons.Size = new Size( 220, 31 );
-		this.layerButtons.TabIndex = 11;
+		this.layerButtons.TabIndex = 3;
 		this.layerButtons.WrapContents = false;
 		// 
 		// layerAddButton
@@ -479,7 +508,6 @@ partial class CustomTilesForm
 		this.layerAddButton.Size = new Size( 60, 25 );
 		this.layerAddButton.TabIndex = 0;
 		this.layerAddButton.Text = "追加";
-		this.shapeTip.SetToolTip( this.layerAddButton, "別の色のレイヤーを追加" );
 		this.layerAddButton.UseVisualStyleBackColor = true;
 		this.layerAddButton.Click +=  this.LayerAddButton_Click ;
 		// 
@@ -520,11 +548,12 @@ partial class CustomTilesForm
 		this.colorPanel.Controls.Add( this.colorCaption );
 		this.colorPanel.Controls.Add( this.colorButton );
 		this.colorPanel.Controls.Add( this.dottedCheck );
-		this.colorPanel.Location = new Point( 0, 157 );
-		this.colorPanel.Margin = new Padding( 0 );
+		this.colorPanel.Controls.Add( this.outlineCheck );
+		this.colorPanel.Location = new Point( 0, 212 );
+		this.colorPanel.Margin = new Padding( 0, 3, 0, 0 );
 		this.colorPanel.Name = "colorPanel";
-		this.colorPanel.Size = new Size( 182, 29 );
-		this.colorPanel.TabIndex = 12;
+		this.colorPanel.Size = new Size( 195, 29 );
+		this.colorPanel.TabIndex = 4;
 		this.colorPanel.WrapContents = false;
 		// 
 		// colorCaption
@@ -533,15 +562,15 @@ partial class CustomTilesForm
 		this.colorCaption.AutoSize = true;
 		this.colorCaption.Location = new Point( 3, 7 );
 		this.colorCaption.Name = "colorCaption";
-		this.colorCaption.Size = new Size( 65, 15 );
+		this.colorCaption.Size = new Size( 19, 15 );
 		this.colorCaption.TabIndex = 0;
-		this.colorCaption.Text = "レイヤーの色";
+		this.colorCaption.Text = "色";
 		// 
 		// colorButton
 		// 
 		this.colorButton.Anchor = AnchorStyles.Left;
 		this.colorButton.FlatStyle = FlatStyle.Flat;
-		this.colorButton.Location = new Point( 74, 3 );
+		this.colorButton.Location = new Point( 28, 3 );
 		this.colorButton.Name = "colorButton";
 		this.colorButton.Size = new Size( 40, 23 );
 		this.colorButton.TabIndex = 1;
@@ -552,18 +581,30 @@ partial class CustomTilesForm
 		// 
 		this.dottedCheck.Anchor = AnchorStyles.Left;
 		this.dottedCheck.AutoSize = true;
-		this.dottedCheck.Location = new Point( 120, 5 );
+		this.dottedCheck.Location = new Point( 74, 5 );
 		this.dottedCheck.Name = "dottedCheck";
-		this.dottedCheck.Size = new Size( 59, 19 );
+		this.dottedCheck.Size = new Size( 50, 19 );
 		this.dottedCheck.TabIndex = 2;
 		this.dottedCheck.Text = "ドット";
 		this.dottedCheck.UseVisualStyleBackColor = true;
 		this.dottedCheck.CheckedChanged +=  this.DottedCheck_CheckedChanged ;
 		// 
+		// outlineCheck
+		// 
+		this.outlineCheck.Anchor = AnchorStyles.Left;
+		this.outlineCheck.AutoSize = true;
+		this.outlineCheck.Location = new Point( 130, 5 );
+		this.outlineCheck.Name = "outlineCheck";
+		this.outlineCheck.Size = new Size( 62, 19 );
+		this.outlineCheck.TabIndex = 3;
+		this.outlineCheck.Text = "輪郭線";
+		this.outlineCheck.UseVisualStyleBackColor = true;
+		this.outlineCheck.CheckedChanged +=  this.OutlineCheck_CheckedChanged ;
+		// 
 		// shapeCaption
 		// 
 		this.shapeCaption.AutoSize = true;
-		this.shapeCaption.Location = new Point( 3, 485 );
+		this.shapeCaption.Location = new Point( 3, 492 );
 		this.shapeCaption.Margin = new Padding( 3, 6, 3, 3 );
 		this.shapeCaption.Name = "shapeCaption";
 		this.shapeCaption.Size = new Size( 38, 15 );
@@ -573,7 +614,7 @@ partial class CustomTilesForm
 		// shapePanel
 		// 
 		this.shapePanel.AutoSize = true;
-		this.shapePanel.Location = new Point( 0, 503 );
+		this.shapePanel.Location = new Point( 0, 510 );
 		this.shapePanel.Margin = new Padding( 0 );
 		this.shapePanel.MaximumSize = new Size( 220, 0 );
 		this.shapePanel.Name = "shapePanel";
@@ -585,7 +626,7 @@ partial class CustomTilesForm
 		this.thicknessPanel.AutoSize = true;
 		this.thicknessPanel.Controls.Add( this.thicknessCaption );
 		this.thicknessPanel.Controls.Add( this.thicknessBox );
-		this.thicknessPanel.Location = new Point( 0, 506 );
+		this.thicknessPanel.Location = new Point( 0, 513 );
 		this.thicknessPanel.Margin = new Padding( 0, 3, 0, 0 );
 		this.thicknessPanel.Name = "thicknessPanel";
 		this.thicknessPanel.Size = new Size( 140, 29 );
@@ -614,13 +655,13 @@ partial class CustomTilesForm
 		// 
 		this.helpLabel.AutoSize = true;
 		this.helpLabel.ForeColor = Color.FromArgb( 117, 117, 117 );
-		this.helpLabel.Location = new Point( 3, 541 );
+		this.helpLabel.Location = new Point( 3, 548 );
 		this.helpLabel.Margin = new Padding( 3, 6, 3, 0 );
 		this.helpLabel.MaximumSize = new Size( 214, 0 );
 		this.helpLabel.Name = "helpLabel";
-		this.helpLabel.Size = new Size( 181, 60 );
-		this.helpLabel.TabIndex = 5;
-		this.helpLabel.Text = "左クリック: 描く　右クリック: 消す\r\nホイール: 拡大・縮小\r\nホイールドラッグ / Space: 移動\r\nCtrl+Z / Ctrl+Y: 元に戻す / やり直し";
+		this.helpLabel.Size = new Size( 181, 75 );
+		this.helpLabel.TabIndex = 9;
+		this.helpLabel.Text = "左クリック: 描く　右クリック: 消す\r\nAlt+クリック: レイヤー選択\r\nホイール: 拡大・縮小\r\nホイールドラッグ / Space: 移動\r\nCtrl+Z / Ctrl+Y: 元に戻す / やり直し";
 		// 
 		// toolPanel
 		// 
@@ -638,7 +679,7 @@ partial class CustomTilesForm
 		this.toolPanel.Name = "toolPanel";
 		this.toolPanel.RowCount = 1;
 		this.toolPanel.RowStyles.Add( new RowStyle() );
-		this.toolPanel.Size = new Size( 656, 32 );
+		this.toolPanel.Size = new Size( 640, 32 );
 		this.toolPanel.TabIndex = 3;
 		// 
 		// undoPanel
@@ -688,7 +729,7 @@ partial class CustomTilesForm
 		this.zoomPanel.Controls.Add( this.zoomOutButton );
 		this.zoomPanel.Controls.Add( this.zoomResetButton );
 		this.zoomPanel.Controls.Add( this.zoomInButton );
-		this.zoomPanel.Location = new Point( 524, 0 );
+		this.zoomPanel.Location = new Point( 508, 0 );
 		this.zoomPanel.Margin = new Padding( 0 );
 		this.zoomPanel.Name = "zoomPanel";
 		this.zoomPanel.Size = new Size( 132, 32 );
@@ -733,9 +774,10 @@ partial class CustomTilesForm
 		this.canvas.Location = new Point( 241, 41 );
 		this.canvas.MinimumSize = new Size( 320, 200 );
 		this.canvas.Name = "canvas";
-		this.canvas.Size = new Size( 650, 533 );
+		this.canvas.Size = new Size( 634, 555 );
 		this.canvas.TabIndex = 1;
 		this.canvas.CellsChanged +=  this.Canvas_CellsChanged ;
+		this.canvas.LayerPicked +=  this.Canvas_LayerPicked ;
 		this.canvas.StrokeStarting +=  this.Canvas_StrokeStarting ;
 		this.canvas.HoverChanged +=  this.Canvas_HoverChanged ;
 		this.canvas.ZoomChanged +=  this.Canvas_ZoomChanged ;
@@ -755,13 +797,13 @@ partial class CustomTilesForm
 		this.bottomPanel.Controls.Add( this.okButton, 3, 0 );
 		this.bottomPanel.Controls.Add( this.cancelButton, 4, 0 );
 		this.bottomPanel.Dock = DockStyle.Fill;
-		this.bottomPanel.Location = new Point( 238, 577 );
+		this.bottomPanel.Location = new Point( 238, 599 );
 		this.bottomPanel.Margin = new Padding( 0 );
 		this.bottomPanel.Name = "bottomPanel";
 		this.bottomPanel.RowCount = 1;
 		this.bottomPanel.RowStyles.Add( new RowStyle() );
 		this.bottomPanel.RowStyles.Add( new RowStyle( SizeType.Absolute, 20F ) );
-		this.bottomPanel.Size = new Size( 656, 36 );
+		this.bottomPanel.Size = new Size( 640, 36 );
 		this.bottomPanel.TabIndex = 2;
 		// 
 		// gameCheck
@@ -803,7 +845,7 @@ partial class CustomTilesForm
 		// 
 		this.okButton.AutoSize = true;
 		this.okButton.DialogResult = DialogResult.OK;
-		this.okButton.Location = new Point( 497, 3 );
+		this.okButton.Location = new Point( 481, 3 );
 		this.okButton.Name = "okButton";
 		this.okButton.Size = new Size( 75, 30 );
 		this.okButton.TabIndex = 3;
@@ -814,7 +856,7 @@ partial class CustomTilesForm
 		// 
 		this.cancelButton.AutoSize = true;
 		this.cancelButton.DialogResult = DialogResult.Cancel;
-		this.cancelButton.Location = new Point( 578, 3 );
+		this.cancelButton.Location = new Point( 562, 3 );
 		this.cancelButton.Name = "cancelButton";
 		this.cancelButton.Size = new Size( 75, 30 );
 		this.cancelButton.TabIndex = 4;
@@ -826,11 +868,11 @@ partial class CustomTilesForm
 		this.AutoScaleDimensions = new SizeF( 96F, 96F );
 		this.AutoScaleMode = AutoScaleMode.Dpi;
 		this.CancelButton = this.cancelButton;
-		this.ClientSize = new Size( 900, 619 );
+		this.ClientSize = new Size( 884, 641 );
 		this.Controls.Add( this.mainPanel );
 		this.Font = new Font( "Yu Gothic UI", 9F );
 		this.MinimizeBox = false;
-		this.MinimumSize = new Size( 660, 600 );
+		this.MinimumSize = new Size( 660, 630 );
 		this.Name = "CustomTilesForm";
 		this.ShowInTaskbar = false;
 		this.StartPosition = FormStartPosition.CenterScreen;
@@ -902,7 +944,10 @@ partial class CustomTilesForm
 	private Label colorCaption;
 	private Button colorButton;
 	private CheckBox dottedCheck;
+	private CheckBox outlineCheck;
 	private Label opacityCaption;
+	private Label mapCaption;
+	private Label mapLabel;
 	private FlowLayoutPanel opacityPanel;
 	private CheckBox opacityCheck;
 	private StepNumericUpDown opacityBox;

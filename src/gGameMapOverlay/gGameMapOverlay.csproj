@@ -8,6 +8,7 @@
     <UseWindowsForms>true</UseWindowsForms>
     <ImplicitUsings>enable</ImplicitUsings>
     <ApplicationHighDpiMode>PerMonitorV2</ApplicationHighDpiMode>
+    <ApplicationIcon>app.ico</ApplicationIcon>
     <AssemblyName>gGameMapOverlay</AssemblyName>
     <RootNamespace>gGameMapOverlay</RootNamespace>
     <!-- win-x64 専用。onnxruntime.dll などのネイティブ DLL を他プラットフォーム分まで出力しないため -->
@@ -38,6 +39,18 @@
        マップ情報のバージョン (version.txt) はリポジトリには置かず、配布する zip にだけ入れる (tools/make-release.ps1) -->
   <ItemGroup>
     <None Include="..\..\data\*.json;..\..\data\*.pak" Link="data\%(Filename)%(Extension)" CopyToOutputDirectory="PreserveNewest" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <Compile Update="Properties\Resources.Designer.cs">
+      <DesignTime>True</DesignTime>
+      <AutoGen>True</AutoGen>
+      <DependentUpon>Resources.resx</DependentUpon>
+    </Compile>
+    <EmbeddedResource Update="Properties\Resources.resx">
+      <Generator>ResXFileCodeGenerator</Generator>
+      <LastGenOutput>Resources.Designer.cs</LastGenOutput>
+    </EmbeddedResource>
   </ItemGroup>
 
 </Project>
