@@ -27,7 +27,7 @@ public static class GameUi
         (Anchor.TopLeft, 0, 0, 365, 25),          // マップ名欄
         (Anchor.TopLeft, 0, 25, 160, 50),         // 座標欄
         (Anchor.TopLeft, 0, 50, 82, 352),         // INFO・SKILL 欄
-        (Anchor.BottomCenter, -290, -157, 414, 0),  // チャット欄・タブ・手紙・左右のボタン・右上の装備の欄 (届いた手紙の数の吹き出しは含めない)
+        (Anchor.BottomCenter, -290, -150, 290, 0),  // チャット欄・タブ・手紙・左右のボタン・右上の装備の欄 (届いた手紙の数の吹き出しは含めない)
         (Anchor.BottomCenter, -456, -74, 456, 0),   // 下の段 (バージョン・パーティ・スキル・アイテム箱など)
     ];
 

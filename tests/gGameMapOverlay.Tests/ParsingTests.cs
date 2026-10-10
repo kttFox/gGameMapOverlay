@@ -37,5 +37,6 @@ public class TextParsingTests
     {
         Assert.Equal("rege1ab0", TextParsing.CanonicalizeForMatch("Rege-Lab O"));
         Assert.Equal(TextParsing.CanonicalizeForMatch("레게 지하동굴 9층"), TextParsing.CanonicalizeForMatch("레게지하동글9충"));
+        Assert.Equal(TextParsing.CanonicalizeForMatch("パゴール"), TextParsing.CanonicalizeForMatch("バゴール"));
     }
 }

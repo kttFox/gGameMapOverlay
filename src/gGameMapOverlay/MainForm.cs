@@ -376,7 +376,7 @@ internal sealed partial class MainForm : Form, ISettingsHost, IInfoSource {
 		return layerControls.FirstOrDefault( entry => entry.Value.Swatch == swatch ).Key?.Key;
 	}
 
-	private void CustomTilesButton_Click( object? sender, EventArgs e ) => ShowCustomTiles();
+	private async void CustomTilesButton_Click( object? sender, EventArgs e ) => await ShowCustomTiles();
 
 	// マップ名が幅に収まらないときは 16pt から段階的に縮め、下限でも入らない分は AutoEllipsis で省略する
 	static readonly float[] NameFontSizes = [16F, 14F, 12F, 10F, 9F];
@@ -1195,11 +1195,16 @@ internal sealed partial class MainForm : Form, ISettingsHost, IInfoSource {
 
 	/// <summary>
 	/// ゲームのクライアント領域を撮る (カスタムの編集画面の背景用)。マスの幅は、その大きさでオーバーレイが使う幅。
-	/// オーバーレイも画面のキャプチャに写るので、撮る間だけ隠す。
+	/// オーバーレイも画面のキャプチャに写るので、撮る間だけ隠す。編集画面 editor も、ゲームに重なっているときだけ撮る間透明にする。
 	/// </summary>
-	private async Task<(Bitmap Image, double TileWidth)?> CaptureGameClientAsync() {
+	private async Task<(Bitmap Image, double TileWidth)?> CaptureGameClientAsync( Form? editor ) {
 		if( reader.FindClientRect() is not { } client || client.Width < 2 || client.Height < 2 ) {
 			return null;
+		}
+		var hideEditor = editor is not null && editor.Bounds.IntersectsWith( client );
+		var opacity = editor?.Opacity ?? 1;
+		if( hideEditor ) {
+			editor!.Opacity = 0;
 		}
 		overlay.Suppressed = true;
 		try {
@@ -1208,6 +1213,27 @@ internal sealed partial class MainForm : Form, ISettingsHost, IInfoSource {
 			return (image, IsoGrid.ForClient( client.Size, new GameCoordinate( 0, 0 ) ).TileWidth);
 		} finally {
 			overlay.Suppressed = false;
+			if( hideEditor ) {
+				editor!.Opacity = opacity;
+			}
+		}
+	}
+
+	private bool openingEditor;
+
+	/// <summary>
+	/// カスタムの編集画面を開く前に、背景のゲーム画面を撮る (開いてから撮ると、写り込まないよう編集画面を一瞬消すことになるため)。
+	/// Open が false なら開かない (撮っている間にもう一度押された)。背景にゲームを映さないなら Shot は null。
+	/// </summary>
+	private async Task<(bool Open, (Bitmap Image, double TileWidth)? Shot)> CaptureForEditorAsync() {
+		if( openingEditor ) {
+			return (false, null);
+		}
+		openingEditor = true;
+		try {
+			return (true, config.CustomEditorShowGame ? await CaptureGameClientAsync( null ) : null);
+		} finally {
+			openingEditor = false;
 		}
 	}
 
@@ -1234,23 +1260,32 @@ internal sealed partial class MainForm : Form, ISettingsHost, IInfoSource {
 		lastLiveReading is { MapName: { } mapName, NameStale: false, Coordinates: { } position, CoordinatesStale: false } ? (mapName, position) : null;
 
 	/// <summary>自分で描くマス (カスタム) の編集画面を開く。</summary>
-	private void ShowCustomTiles() {
-		using var form = new CustomTilesForm( config, config.CustomGroups, groups => PreviewCustomTiles( groups, null ), CaptureGameClientAsync );
+	private async Task ShowCustomTiles() {
+		var shot = await CaptureForEditorAsync();
+		if( !shot.Open ) {
+			return;
+		}
+		using var form = new CustomTilesForm( config, config.CustomGroups, groups => PreviewCustomTiles( groups, null ), CaptureGameClientAsync,
+			initialShot: shot.Shot );
 		if( form.ShowDialog( this ) == DialogResult.OK ) {
 			config.CustomGroups = form.Groups;
 		}
 		OverlaySettingsChanged(); // キャンセルでも、背景にゲームを映すかは保存する
 	}
 
-	private void MapTilesButton_Click( object? sender, EventArgs e ) => ShowMapTiles();
+	private async void MapTilesButton_Click( object? sender, EventArgs e ) => await ShowMapTiles();
 
 	/// <summary>
 	/// マップに固定する自分で描くマスの編集画面を開く。いつでも開け、すべてのマップのグループを編集する。
 	/// 今いるマップと座標が読めていれば、そのマップのグループを今の位置を中央にして開く。グループを足すときは、押したときに読めているか確かめる。
 	/// </summary>
-	private void ShowMapTiles() {
+	private async Task ShowMapTiles() {
+		var shot = await CaptureForEditorAsync();
+		if( !shot.Open ) {
+			return;
+		}
 		using var form = new CustomTilesForm( config, config.MapCustomGroups, groups => PreviewCustomTiles( null, groups ), CaptureGameClientAsync,
-			mapMode: true, CurrentPlace );
+			mapMode: true, CurrentPlace, shot.Shot );
 		if( form.ShowDialog( this ) == DialogResult.OK ) {
 			config.MapCustomGroups = form.Groups;
 		}

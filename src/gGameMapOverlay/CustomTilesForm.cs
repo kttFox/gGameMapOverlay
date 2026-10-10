@@ -32,12 +32,14 @@ internal sealed partial class CustomTilesForm : Form {
 	// ドラッグを始めたときの写し。実際にマスが変わったら undoStack に積む。
 	private List<CustomTileGroup>? strokeSnapshot;
 	// 背景に映すゲーム画面を撮る (画像と、その画面でのマスの幅)。ゲームが見つからなければ null。
-	private readonly Func<Task<(Bitmap Image, double TileWidth)?>> captureGame;
+	private readonly Func<Form?, Task<(Bitmap Image, double TileWidth)?>> captureGame;
 	private bool refreshing;
 	// 画面を表示し終えたか。
 	private bool shown;
 	// 背景に映すゲーム画面のメッセージ (撮れなかった理由など)。
 	private string gameStatus = "";
+	/// <summary>背景のゲーム画面を撮ったときに今いたマップ (マップのマスで、選んでいるグループのマップと違えば映さない)。</summary>
+	private string? gameMap;
 	// 開いたときのグループの内容 (キャンセルで閉じるときに、変更があるかを比べる)。
 	private readonly string initialState;
 	// マップのマスを編集するか (false ならキャラクターに付いていくマス)。
@@ -46,12 +48,17 @@ internal sealed partial class CustomTilesForm : Form {
 	private readonly (string MapName, Parsing.GameCoordinate Position)? place;
 	// 今いるマップと座標を読む (読めていなければ null)。マップのマスのグループを足すときに確かめる。
 	private readonly Func<(string MapName, Parsing.GameCoordinate Position)?> currentPlace;
+	// 開く前に撮った背景のゲーム画面 (開いたときに映す)。
+	private (Bitmap Image, double TileWidth)? initialShot;
 
 	/// <param name="source">編集するグループ (写しを編集する)。</param>
 	/// <param name="mapMode">マップのマスを編集する。</param>
 	/// <param name="currentPlace">マップのマスを編集するときの、今いるマップと座標を読む (読めていなければ null)。</param>
+	/// <param name="initialShot">開く前に撮った背景のゲーム画面 (この画面が持ち、使わなければ破棄する)。開くときに透明にして撮らずに済む。</param>
 	public CustomTilesForm( AppConfig config, IEnumerable<CustomTileGroup> source, Action<IReadOnlyList<CustomTileGroup>?> preview,
-		Func<Task<(Bitmap Image, double TileWidth)?>> captureGame, bool mapMode = false, Func<(string MapName, Parsing.GameCoordinate Position)?>? currentPlace = null ) {
+		Func<Form?, Task<(Bitmap Image, double TileWidth)?>> captureGame, bool mapMode = false, Func<(string MapName, Parsing.GameCoordinate Position)?>? currentPlace = null,
+		(Bitmap Image, double TileWidth)? initialShot = null ) {
+		this.initialShot = initialShot;
 		this.config = config;
 		this.preview = preview;
 		this.mapMode = mapMode;
@@ -375,6 +382,7 @@ internal sealed partial class CustomTilesForm : Form {
 			Text = map is null ? "マップのマス" : $"マップのマス - {map}";
 		}
 		canvas.SelectedGroup = group;
+		UpdateGameImageShown();
 		RefreshLayers( layer );
 		ShowStatus();
 	}
@@ -384,8 +392,12 @@ internal sealed partial class CustomTilesForm : Form {
 			: mapMode && ( Selected?.OriginCoordinate ?? place?.Position ) is { } origin ? $"マウスの位置: 座標 ({origin.X + cell.X}, {origin.Y + cell.Y})　"
 			: $"マウスの位置: キャラクターから X {cell.X:+0;-0;0}, Y {cell.Y:+0;-0;0}　";
 		var count = Selected is { } group ? $"「{group.Name}」 {group.CellCount} マス" : "グループなし";
-		statusLabel.Text = hover + count + gameStatus;
+		var game = canvas.GameImageHidden && gameCheck.Checked ? "　(今いるマップと違うためゲームの画面は映しません)" : gameStatus;
+		statusLabel.Text = hover + count + game;
 	}
+
+	/// <summary>マップのマスで、選んでいるグループのマップがゲーム画面を撮ったときのマップと違えば、背景のゲーム画面を映さない。</summary>
+	private void UpdateGameImageShown() => canvas.GameImageHidden = mapMode && ViewMap != gameMap;
 
 	private void Canvas_ZoomChanged( object? sender, EventArgs e ) => zoomResetButton.Text = $"{canvas.ZoomPercent}%";
 
@@ -456,7 +468,13 @@ internal sealed partial class CustomTilesForm : Form {
 		base.OnShown( e );
 		shown = true;
 		ShowPreview();
-		if( gameCheck.Checked ) {
+		var shot = initialShot;
+		initialShot = null;
+		if( !gameCheck.Checked ) {
+			shot?.Image.Dispose();
+		} else if( shot is not null ) {
+			ShowGameShot( shot );
+		} else {
 			_ = CaptureGameAsync();
 		}
 	}
@@ -480,29 +498,35 @@ internal sealed partial class CustomTilesForm : Form {
 		base.OnFormClosed( e );
 		preview( null );
 		canvas.SetGameImage( null, 0 );
+		initialShot?.Image.Dispose();
+		initialShot = null;
 	}
 
 	/// <summary>
-	/// 背景に映すゲーム画面を撮る。この画面がゲームに重なっていると写り込むので、撮る間だけ透明にする
-	/// (オーバーレイは captureGame が隠す)。
+	/// 背景に映すゲーム画面を撮る。この画面がゲームに重なっていると写り込むので、captureGame が撮る間だけ透明にする
+	/// (重なっていなければ透明にしない。オーバーレイも captureGame が隠す)。
 	/// </summary>
 	private async Task CaptureGameAsync() {
 		recaptureButton.Enabled = false;
-		var opacity = Opacity;
-		Opacity = 0;
 		(Bitmap Image, double TileWidth)? shot = null;
 		try {
-			shot = await captureGame(); // 透明にした画面が描き直されるのも、ここで待つ
+			shot = await captureGame( this ); // 透明にした画面が描き直されるのも、ここで待つ
 		} finally {
-			Opacity = opacity;
 			recaptureButton.Enabled = gameCheck.Checked;
 		}
 		if( IsDisposed || !gameCheck.Checked ) {
 			shot?.Image.Dispose();
 			return;
 		}
+		ShowGameShot( shot );
+	}
+
+	/// <summary>撮ったゲーム画面を背景に映す (null なら見つからなかったと表示する)。</summary>
+	private void ShowGameShot( (Bitmap Image, double TileWidth)? shot ) {
 		gameStatus = shot is null ? "　(ゲームの画面が見つかりません)" : "";
+		gameMap = currentPlace()?.MapName;
 		canvas.SetGameImage( shot?.Image, shot?.TileWidth ?? 0 );
+		UpdateGameImageShown();
 		ShowStatus();
 	}
 
@@ -555,10 +579,32 @@ internal sealed partial class CustomTilesForm : Form {
 	// ---- イベントハンドラ (デザイナーから接続) ------------------------------------------
 
 	private void GroupList_SelectedIndexChanged( object? sender, EventArgs e ) {
-		if( !refreshing ) {
-			ShowSelected();
+		if( refreshing ) {
+			return;
 		}
+		if( groupList.SelectedIndices.Count == 0 ) {
+			// 空欄をクリックすると選択が外れるので、直前のグループを選び直す。
+			// 別の項目を選んだときも、いったん外れてから選ばれるので、外れたままか後で確かめる。
+			var last = lastSelected;
+			BeginInvoke( () => {
+				if( IsDisposed || groupList.SelectedIndices.Count > 0 ) {
+					return;
+				}
+				if( last >= 0 && last < groupList.Items.Count ) {
+					groupList.Items[last].Selected = true; // ここでまた呼ばれて表示する
+					groupList.Items[last].Focused = true;
+				} else {
+					ShowSelected();
+				}
+			} );
+			return;
+		}
+		lastSelected = groupList.SelectedIndices[0];
+		ShowSelected();
 	}
+
+	/// <summary>最後に選んでいたグループの番号 (空欄のクリックで外れたときに選び直す)。</summary>
+	private int lastSelected = -1;
 
 	private void GroupList_ItemChecked( object? sender, ItemCheckedEventArgs e ) {
 		// ListView は表示するときにも (チェックを変えていなくても、いったん外した状態で) 通知するので、表示した後に変わったときだけ扱う。

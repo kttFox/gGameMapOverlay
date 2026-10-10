@@ -60,8 +60,10 @@ public static partial class TextParsing
             ['l'] = '1', ['i'] = '1', ['|'] = '1', ['!'] = '1',
             ['굴'] = '글', ['충'] = '층',
         };
+        // OCR は半濁点をすべて濁点として読む (パゴール → バゴール) ので、データ側の名前も半濁点を濁点に寄せて比べる (パ → バ)。
+        var folded = (value ?? "").Normalize(NormalizationForm.FormKD).Replace('゚', '゙').Normalize(NormalizationForm.FormC);
         var builder = new StringBuilder();
-        foreach (var ch in (value ?? "").Normalize(NormalizationForm.FormKC).ToLowerInvariant())
+        foreach (var ch in folded.ToLowerInvariant())
         {
             if (substitutions.TryGetValue(ch, out var replacement))
             {

@@ -67,7 +67,7 @@ public class GameUiTests
     [InlineData(1056, 792, 40, 200, true)]   // SKILL 欄
     [InlineData(1056, 792, 950, 40, false)]  // 右上の HP/MP は動かせて、上を右クリックしても歩くので除かない
     [InlineData(1056, 792, 528, 720, true)]  // チャット欄
-    [InlineData(1056, 792, 1000, 770, true)] // 右下
+    [InlineData(1056, 792, 980, 770, true)]  // 右下 (アイテム箱など)
     [InlineData(1056, 792, 528, 396, false)] // キャラクター
     [InlineData(1056, 792, 40, 700, false)]  // 左下の UI のない所
     [InlineData(1500, 792, 750, 720, true)]  // 横に広げても、チャット欄は中央
@@ -318,7 +318,7 @@ public class OverlayConfigTests
             config.SetOverlayLayerShown(layer, false);
         }
         var empty = new CustomTileGroup { Name = "空", Layers = [new()] };
-        var drawn = new CustomTileGroup { Name = "範囲", Layers = [new(), new() { Cells = [[1, 0], [0, -1]] }] };
+        var drawn = new CustomTileGroup { Name = "範囲", Layers = [new()], Cells = [[1, 0], [0, -1]] };
         config.CustomGroups.AddRange([empty, drawn]);
         Assert.Equal([drawn], config.ShownCustomGroups);
         Assert.True(config.OverlayEnabled); // カスタムだけでも表示する
@@ -339,10 +339,10 @@ public class OverlayConfigTests
             Assert.Equal("A", group.Name);
             Assert.False(group.Shown);
             Assert.Equal(AppConfig.MaxOverlayOpacity, group.Opacity); // 範囲に収める
-            var layer = Assert.Single(group.Layers); // レイヤーがなかったころの色・マスは 1 つ目のレイヤーにする
-            Assert.Equal([[1, 2], [-4, 5], [7, 7], [8, 8, 16]], layer.Cells); // 重複・壊れたマス・形が空のマスを除き、1 マス全部は形を書かない
+            var layer = Assert.Single(group.Layers); // レイヤーがなかったころの色は 1 つ目のレイヤーにする
+            Assert.Equal([[1, 2], [-4, 5], [7, 7], [8, 8, 16]], group.Cells); // 重複・壊れたマス・形が空のマスを除き、1 マス全部は形を書かない
             Assert.Equal(Color.FromArgb(255, 255, 128, 0), layer.GetColor(100));
-            Assert.Null(group.LegacyCells);
+            Assert.Null(group.LegacyPens);
             Assert.Null(group.LegacyColor);
         }
         finally
@@ -359,12 +359,12 @@ public class OverlayConfigTests
         {
             var path = Path.Combine(directory.FullName, "config.json");
             var config = new AppConfig();
-            config.CustomGroups.Add(new CustomTileGroup { Name = "A", Layers = [new() { Color = "#FF0000", Cells = [[0, 1]] }, new() { Color = "#0000FF", Cells = [[2, 3, CustomTileGroup.FrameFlag]] }] });
+            config.CustomGroups.Add(new CustomTileGroup { Name = "A", Layers = [new() { Color = "#FF0000" }, new() { Color = "#0000FF" }], Cells = [[0, 1], [2, 3, CustomTileGroup.FrameFlag, CustomTileShape.DefaultThickness, 1]] });
             config.Save(path);
             Assert.DoesNotContain("\"color\": \"#00BCD4\"", File.ReadAllText(path)); // グループには色を書かない
             var group = Assert.Single(AppConfig.Load(path).CustomGroups);
             Assert.Equal(["#FF0000", "#0000FF"], group.Layers.Select(layer => layer.Color));
-            Assert.Equal([[2, 3, CustomTileGroup.FrameFlag]], group.Layers[1].Cells);
+            Assert.Equal([[0, 1], [2, 3, CustomTileGroup.FrameFlag, CustomTileShape.DefaultThickness, 1]], group.Cells);
             Assert.Equal(2, group.CellCount);
             Assert.Equal(2, group.ToCustomTiles().Count()); // レイヤーごとに描く
         }
@@ -377,12 +377,11 @@ public class OverlayConfigTests
     [Fact]
     public void CustomGroup_ColorUsesOwnOpacity()
     {
-        var layer = new CustomTileLayer { Color = "#102030", Cells = [[0, 0]] };
-        var group = new CustomTileGroup { Opacity = 40, Layers = [layer] };
+        var group = new CustomTileGroup { Opacity = 40, Layers = [new CustomTileLayer { Color = "#102030" }], Cells = [[0, 0]] };
         Assert.Equal(Color.FromArgb(102, 0x10, 0x20, 0x30), Assert.Single(group.ToCustomTiles()).Color);
         group.OwnOpacity = false;
         Assert.Equal(204, Assert.Single(group.ToCustomTiles(80)).Color.A); // 個別でなければ全体の不透明度
-        layer.Color = "bad";
+        var layer = new CustomTileLayer { Color = "bad" };
         Assert.Equal(CustomTileGroup.DefaultColor.ToArgb() & 0xFFFFFF, layer.GetColor().ToArgb() & 0xFFFFFF);
     }
 
@@ -409,16 +408,17 @@ public class OverlayConfigTests
     [Fact]
     public void CustomGroup_SetCellAddsAndRemoves()
     {
-        var group = new CustomTileLayer();
-        Assert.True(group.SetCell(2, -1, CustomTileGroup.FullMask));
-        Assert.False(group.SetCell(2, -1, CustomTileGroup.FullMask)); // 2 回描いても 1 つ
+        var group = new CustomTileGroup { Layers = [new CustomTileLayer()] };
+        const int thickness = CustomTileShape.DefaultThickness;
+        Assert.True(group.SetCell(2, -1, CustomTileGroup.FullMask, thickness, 0));
+        Assert.False(group.SetCell(2, -1, CustomTileGroup.FullMask, thickness, 0)); // 2 回描いても 1 つ
         Assert.Equal(CustomTileGroup.FullMask, group.MaskAt(2, -1));
-        Assert.Equal([[6, -3, 3, 3]], group.ToTileRects().Rects); // 1/3 マス単位
+        Assert.Equal([[6, -3, 3, 3]], group.ToCustomTiles().Single().Fill.Rects); // 1/3 マス単位
         Assert.Equal([[2, -1]], group.Cells); // 1 マス全部は形を書かない
         var corner = CustomTileShape.PartMask(0, 0);
-        Assert.True(group.SetCell(2, -1, corner)); // 形は置き換える
-        Assert.Equal([[6, -3, 1, 1]], group.ToTileRects().Rects);
-        Assert.True(group.SetCell(2, -1, 0));
+        Assert.True(group.SetCell(2, -1, corner, thickness, 0)); // 形は置き換える
+        Assert.Equal([[6, -3, 1, 1]], group.ToCustomTiles().Single().Fill.Rects);
+        Assert.True(group.SetCell(2, -1, 0, thickness, 0));
         Assert.Empty(group.Cells);
     }
 
@@ -448,24 +448,28 @@ public class OverlayConfigTests
     public void CustomGroup_KeepsThicknessPerCell()
     {
         var vertical = CustomTileShape.All.Single(shape => shape.Name == "縦").Mask;
-        var group = new CustomTileLayer();
-        Assert.True(group.SetCell(0, 0, vertical));
+        var group = new CustomTileGroup { Layers = [new CustomTileLayer()] };
+        Assert.True(group.SetCell(0, 0, vertical, CustomTileShape.DefaultThickness, 0));
         Assert.Equal([[0, 0, vertical]], group.Cells); // 太さ 1/3 は書かない
-        Assert.True(group.SetCell(0, 0, vertical, 5)); // 太さだけ変えても描き直す
-        Assert.False(group.SetCell(0, 0, vertical, 5));
+        Assert.True(group.SetCell(0, 0, vertical, 5, 0)); // 太さだけ変えても描き直す
+        Assert.False(group.SetCell(0, 0, vertical, 5, 0));
         Assert.Equal(5, group.ThicknessAt(0, 0));
-        Assert.True(group.SetCell(1, 0, CustomTileGroup.FullMask, 5));
+        Assert.True(group.SetCell(1, 0, CustomTileGroup.FullMask, 5, 0));
         Assert.Equal([1, 0], group.Cells[1]); // 1 マス全部は太さを書かない
         // 1/3 と 1/5 が両方割り切れる 1/15 マス単位で描く
-        Assert.Equal(15, group.FillDivision());
-        Assert.Equal([[6, 0, 3, 15], [15, 0, 15, 15]], group.ToTileRects().Rects);
-        Assert.Equal(15, group.ToCustomTiles().Division);
+        var tiles = group.ToCustomTiles().Single();
+        Assert.Equal(15, tiles.Division);
+        Assert.Equal([[6, 0, 3, 15], [15, 0, 15, 15]], tiles.Fill.Rects);
     }
 
     [Fact]
     public void CustomGroup_NormalizeKeepsThickness()
     {
-        var group = new CustomTileLayer { Cells = [[0, 0, 0b010_010_010, 5], [1, 0, 0b010_010_010, 3], [2, 0, CustomTileGroup.FullMask, 4], [3, 0, 0b010_010_010, 99]] };
+        var group = new CustomTileGroup
+        {
+            Layers = [new CustomTileLayer()],
+            Cells = [[0, 0, 0b010_010_010, 5], [1, 0, 0b010_010_010, 3], [2, 0, CustomTileGroup.FullMask, 4], [3, 0, 0b010_010_010, 99]],
+        };
         group.Normalize();
         Assert.Equal([[0, 0, 0b010_010_010, 5], [1, 0, 0b010_010_010], [2, 0], [3, 0, 0b010_010_010, CustomTileShape.MaxThickness]], group.Cells);
     }
@@ -565,7 +569,7 @@ public class OverlayDrawingTests
         Assert.Equal(special.GetPixel(400, 300).ToArgb(), both.GetPixel(400, 300).ToArgb()); // 縮めた特殊マスの中
         Assert.Equal(monster.GetPixel(400, InsideFullTileOnly).ToArgb(), both.GetPixel(400, InsideFullTileOnly).ToArgb()); // 周りはモンスター境界
 
-        var custom = new List<CustomTiles> { new CustomTileLayer { Cells = [[0, 0]] }.ToCustomTiles() };
+        var custom = new List<CustomTiles> { CustomTileGroup.ToCustomTiles([[0, 0]], new CustomTileLayer()) };
         using var over = Render(Scene(null) with { PlayerColor = null, Layers = [(OverlayLayer.ImpassableEdge, tile, half(OverlayLayer.ImpassableEdge))], Custom = custom });
         using var customOnly = Render(Scene(null) with { PlayerColor = null, Custom = custom });
         Assert.Equal(customOnly.GetPixel(400, 300).ToArgb(), over.GetPixel(400, 300).ToArgb());
@@ -617,7 +621,7 @@ public class OverlayDrawingTests
 
     /// <summary>不透明の 1 グループ。cells は [dx, dy] か [dx, dy, 形]。</summary>
     private static List<CustomTiles> Custom(params int[][] cells) =>
-        [new CustomTileLayer { Cells = cells.ToList() }.ToCustomTiles(100)];
+        [CustomTileGroup.ToCustomTiles(cells, new CustomTileLayer(), 100)];
 
     [Fact]
     public void Draw_CustomTilesStayRelativeToPlayer()

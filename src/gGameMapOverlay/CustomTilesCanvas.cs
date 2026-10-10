@@ -60,6 +60,22 @@ internal sealed class CustomTilesCanvas : Control
     private CustomTileLayer CurrentLayer =>
         SelectedGroup is { } group && Layer >= 0 && Layer < group.Layers.Count ? group.Layers[Layer] : new();
 
+    /// <summary>背景のゲーム画面を (持ったまま) 映さない。</summary>
+    [System.ComponentModel.DesignerSerializationVisibility(System.ComponentModel.DesignerSerializationVisibility.Hidden)]
+    public bool GameImageHidden
+    {
+        get => gameImageHidden;
+        set
+        {
+            if (gameImageHidden != value)
+            {
+                gameImageHidden = value;
+                Invalidate();
+            }
+        }
+    }
+    private bool gameImageHidden;
+
     private Bitmap? gameImage;
     private double gameTileWidth;
 
@@ -157,7 +173,7 @@ internal sealed class CustomTilesCanvas : Control
         graphics.SmoothingMode = SmoothingMode.AntiAlias;
         var grid = Grid();
         var size = ClientSize;
-        if (gameImage is { } image && gameTileWidth > 0)
+        if (gameImage is { } image && gameTileWidth > 0 && !gameImageHidden)
         {
             var scale = grid.TileWidth / gameTileWidth;
             var (width, height) = ((float)(image.Width * scale), (float)(image.Height * scale));
