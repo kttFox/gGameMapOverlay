@@ -877,6 +877,7 @@ internal sealed partial class MainForm : Form, ISettingsHost, IInfoSource {
 		if( !reader.IsGameForeground() ) {
 			HideOverlay();
 		} else {
+			overlay.BringToTop();
 			Tick(); // 前面に戻ったらすぐ読み直して表示する (読み取り中なら Tick が何もしない)
 		}
 	}

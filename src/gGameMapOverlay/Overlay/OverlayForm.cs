@@ -1206,8 +1206,29 @@ internal sealed class OverlayForm : Form
         if (!Visible && !suppressed)
         {
             Show();
+            BringToTop();
         }
     }
+
+    /// <summary>
+    /// 最前面へ戻す。WS_EX_TOPMOST が付いていても、後から起動したゲームの下に回ることがあるので、
+    /// 表示したときと前面のウィンドウが変わったときに呼ぶ。
+    /// </summary>
+    public void BringToTop()
+    {
+        if (Visible)
+        {
+            SetWindowPos(Handle, HWND_TOPMOST, 0, 0, 0, 0, SWP_NOMOVE | SWP_NOSIZE | SWP_NOACTIVATE);
+        }
+    }
+
+    private static readonly nint HWND_TOPMOST = -1;
+    private const uint SWP_NOSIZE = 0x0001;
+    private const uint SWP_NOMOVE = 0x0002;
+    private const uint SWP_NOACTIVATE = 0x0010;
+
+    [System.Runtime.InteropServices.DllImport("user32.dll")]
+    private static extern bool SetWindowPos(nint hWnd, nint hWndInsertAfter, int x, int y, int cx, int cy, uint flags);
 
     // 計測用: 環境変数 GMO_DRAWLOG があれば、描いたコマごとに (時刻, マス (0, 0) の画面上の位置) を書き出す。
     private static readonly StreamWriter? DrawLog = Environment.GetEnvironmentVariable("GMO_DRAWLOG") is { Length: > 0 } path ? new StreamWriter(path, append: false) { AutoFlush = true } : null;

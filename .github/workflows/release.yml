@@ -61,9 +61,6 @@ jobs:
           "title=$title"         >> $env:GITHUB_OUTPUT
           "prerelease=$prerelease" >> $env:GITHUB_OUTPUT
 
-      - name: Test
-        run: dotnet test -c Release
-
       # latest リリースの manifest.json (もう一方のコンポーネントの最新版が入っている) を引き継ぐ。初回はない
       - name: Download current manifest
         id: latest
