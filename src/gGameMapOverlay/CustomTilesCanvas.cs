@@ -19,9 +19,10 @@ internal sealed class CustomTilesCanvas : Control
     // ゲームの画面 (1920 × 1080 なら横 10.7・縦 12) が入るくらいを初期値にする。
     // ホイール 1 ノッチで ZoomStep 倍ずつ変える (大きく拡大したときも小刻みに動くように)。
     private const double MinHalfTiles = 0.25;
-    private const double MaxHalfTiles = 30;
+    private const double MaxHalfTiles = 1100;
     private const double ZoomStep = 1.2;
     private const double DefaultHalfTiles = 11;
+    private const float MinGridTileWidth = 4;
     private double halfTiles = DefaultHalfTiles;
 
     // ホイールを押してドラッグで動かした量 (マスの幅を 1 とした画面上の量)。
@@ -160,7 +161,6 @@ internal sealed class CustomTilesCanvas : Control
     {
         // 幅は左右 halfTiles マス分 (マスの幅 × 2 × halfTiles)、高さは上下 halfTiles マス分 (マスの高さ × 2 × halfTiles) が入る大きさにする。
         var width = Math.Min(ClientSize.Width / (2.0 * halfTiles), ClientSize.Height / halfTiles);
-        width = Math.Max(4, width);
         // 動かした量はマスの数で持つ (拡大・縮小しても同じマスが中央付近に残るように)。
         var center = new PointF(ClientSize.Width / 2f + (float)(pan.X * width), ClientSize.Height / 2f + (float)(pan.Y * width));
         return new IsoGrid(center, new GameCoordinate(0, 0), width, width / 2);
@@ -170,6 +170,8 @@ internal sealed class CustomTilesCanvas : Control
     {
         var graphics = e.Graphics;
         graphics.Clear(BackColor);
+        // 最小化などで大きさが 0 のときはマスの幅も 0 になり位置を求められないので描かない。
+        if (ClientSize.Width <= 0 || ClientSize.Height <= 0) return;
         graphics.SmoothingMode = SmoothingMode.AntiAlias;
         var grid = Grid();
         var size = ClientSize;
@@ -184,6 +186,8 @@ internal sealed class CustomTilesCanvas : Control
             .Select(grid.TileAt).ToArray();
         var (minX, maxX) = (corners.Min(tile => tile.X) - 1, corners.Max(tile => tile.X) + 2);
         var (minY, maxY) = (corners.Min(tile => tile.Y) - 1, corners.Max(tile => tile.Y) + 2);
+        // 縮小してマスが細かすぎるときは格子で埋まってしまうので描かない。
+        if (grid.TileWidth >= MinGridTileWidth)
         using (var pen = new Pen(GridLineColor))
         {
             for (var x = minX; x <= maxX; x++)
