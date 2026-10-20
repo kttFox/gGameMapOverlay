@@ -1295,8 +1295,31 @@ internal sealed class OverlayForm : Form
     protected override void OnHandleCreated(EventArgs e)
     {
         base.OnHandleCreated(e);
+        ExcludeFromCapture();
         Redraw();
     }
+
+    /// <summary>スクリーンショットや録画には映さない (画面には出る)。Windows 10 2004 より前は黒く塗られる。</summary>
+    private void ExcludeFromCapture()
+    {
+        // レイヤードウィンドウのままだと失敗する (ERROR_NOT_ENOUGH_MEMORY) ので、いったん外してから設定する。戻しても設定は残る。
+        var exStyle = GetWindowLongW(Handle, GWL_EXSTYLE);
+        SetWindowLongW(Handle, GWL_EXSTYLE, exStyle & ~WS_EX_LAYERED);
+        SetWindowDisplayAffinity(Handle, WDA_EXCLUDEFROMCAPTURE);
+        SetWindowLongW(Handle, GWL_EXSTYLE, exStyle);
+    }
+
+    private const int GWL_EXSTYLE = -20;
+    private const uint WDA_EXCLUDEFROMCAPTURE = 0x11;
+
+    [System.Runtime.InteropServices.DllImport("user32.dll")]
+    private static extern bool SetWindowDisplayAffinity(nint hWnd, uint affinity);
+
+    [System.Runtime.InteropServices.DllImport("user32.dll")]
+    private static extern int GetWindowLongW(nint hWnd, int index);
+
+    [System.Runtime.InteropServices.DllImport("user32.dll")]
+    private static extern int SetWindowLongW(nint hWnd, int index, int value);
 
     /// <summary>今の scene と offset で描き直す。</summary>
     private void Redraw()
