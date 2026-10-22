@@ -45,6 +45,34 @@
       }
     },
     {
+      "id": "1_militard_hw",
+      "replaces": "1_militard",
+      "original_names": {
+        "ko": [
+          "밀리타드(일반)"
+        ],
+        "ja": [
+          "ミリタード(通常)"
+        ],
+        "en": [
+          "Militard (Normal)"
+        ]
+      },
+      "from": "2026-10-22T12:00:00+09:00",
+      "until": "2026-11-19T12:00:00+09:00",
+      "names": {
+        "ko": [
+          "밀리타드(할로윈)"
+        ],
+        "ja": [
+          "ミリタード(ハロウィン)"
+        ],
+        "en": [
+          "Militard (Halloween)"
+        ]
+      }
+    },
+    {
       "id": "2_dihol",
       "names": {
         "ko": [
@@ -119,6 +147,34 @@
       }
     },
     {
+      "id": "6_pagohol_hw",
+      "replaces": "6_pagohol",
+      "original_names": {
+        "ko": [
+          "파고홀(일반)"
+        ],
+        "ja": [
+          "パゴホル(通常)"
+        ],
+        "en": [
+          "Pagohol (Normal)"
+        ]
+      },
+      "from": "2026-10-22T12:00:00+09:00",
+      "until": "2026-11-19T12:00:00+09:00",
+      "names": {
+        "ko": [
+          "파고홀(할로윈)"
+        ],
+        "ja": [
+          "パゴホル(ハロウィン)"
+        ],
+        "en": [
+          "Pagohol (Halloween)"
+        ]
+      }
+    },
+    {
       "id": "7_laslan",
       "names": {
         "ko": [
@@ -184,7 +240,8 @@
         ],
         "ja": [
           "カリブリア半島",
-          "カリブリアー半島"
+          "カリブリアー半島",
+          "カリブリアーギ島"
         ],
         "en": [
           "Calibria Peninsula"
@@ -1779,6 +1836,20 @@
         ],
         "en": [
           "Caswell Barracks"
+        ]
+      }
+    },
+    {
+      "id": "mapinfo_name_481",
+      "names": {
+        "ko": [
+          "헬피도평원"
+        ],
+        "ja": [
+          "ヘルピド平原"
+        ],
+        "en": [
+          "Helpido Plains"
         ]
       }
     },

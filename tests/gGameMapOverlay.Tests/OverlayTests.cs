@@ -140,6 +140,29 @@ public class OverlayDataTests
         Assert.Null(Data.FindMapId(null));
     }
 
+    [Theory]
+    [InlineData("2026-10-22T11:59:59+09:00", "1_militard")]
+    [InlineData("2026-10-22T12:00:00+09:00", "1_militard_hw")] // ハロウィン期間 (12:00 から)
+    [InlineData("2026-11-19T11:59:59+09:00", "1_militard_hw")]
+    [InlineData("2026-11-19T12:00:00+09:00", "1_militard")] // 12:00 の手前まで
+    public void FindMapId_UsesReplacementDuringPeriod(string now, string id)
+    {
+        Assert.Equal(id, Data.FindMapId("ミリタード", DateTimeOffset.Parse(now)));
+        Assert.Equal("1_militard_hw", Data.FindMapId("ミリタード(ハロウィン)", DateTimeOffset.Parse(now))); // 手動選択の名前は期間外でも引ける
+    }
+
+    [Fact]
+    public void OriginalName_SelectsNormalMapOnlyDuringPeriod()
+    {
+        var during = DateTimeOffset.Parse("2026-11-01T12:00:00+09:00");
+        var after = DateTimeOffset.Parse("2026-11-19T12:00:00+09:00");
+        Assert.Equal("1_militard", Data.FindMapId("ミリタード(通常)", during));
+        Assert.Equal("6_pagohol", Data.FindMapId("パゴホル(通常)", during));
+        var names = Data.MapNames("ja", during).ToList();
+        Assert.Equal(names.IndexOf("ミリタード(ハロウィン)") + 1, names.IndexOf("ミリタード(通常)"));
+        Assert.DoesNotContain("ミリタード(通常)", Data.MapNames("ja", after));
+    }
+
     [Fact]
     public void MonsterBlock_ReadsRects()
     {
